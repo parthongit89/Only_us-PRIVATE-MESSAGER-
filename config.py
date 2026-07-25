@@ -6,8 +6,11 @@ load_dotenv()
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'onlyus_super_secret_key_2026_privacy_first')
     
-    # Primary PostgreSQL Database URL matching pgAdmin database name 'onlyus'
-    PG_DATABASE_URL = os.environ.get('DATABASE_URL', 'postgresql://postgres:parthpostgress89%23%23@localhost:5432/onlyus')
+    raw_pg_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:parthpostgress89%23%23@localhost:5432/onlyus')
+    if raw_pg_url and raw_pg_url.startswith("postgres://"):
+        raw_pg_url = raw_pg_url.replace("postgres://", "postgresql://", 1)
+
+    PG_DATABASE_URL = raw_pg_url
     SQLITE_FALLBACK_URL = os.environ.get('FALLBACK_SQLITE_URL', 'sqlite:///onlyus.db')
     
     SQLALCHEMY_DATABASE_URI = PG_DATABASE_URL
