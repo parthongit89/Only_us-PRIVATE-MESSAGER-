@@ -1,43 +1,64 @@
 {% extends "base.html" %}
 
-{% block title %}OnlyUs - Invite People{% endblock %}
+{% block title %}OnlyUs - Invite Friend{% endblock %}
 
 {% block content %}
-<div class="glow-01-bg min-h-screen flex flex-col justify-between p-6 max-w-md mx-auto relative">
+<div class="app-container flex flex-col justify-between bg-gray-950 text-gray-100 border border-gray-800">
 
-  <!-- Top Navigation Header -->
-  <div class="pt-8 flex items-center justify-between">
-    <h1 class="text-3xl font-extrabold text-white tracking-tight">Invite People</h1>
-    <button onclick="toggleSideDrawer()" class="p-2 text-white hover:text-orange-400 transition focus:outline-none">
-      <i data-lucide="menu" class="w-7 h-7"></i>
-    </button>
+  <!-- Header matching Notifications theme -->
+  <div class="bg-gradient-to-b from-gray-900 to-gray-950 px-6 pt-10 pb-6 flex items-center justify-between border-b border-gray-800">
+    <a href="{{ url_for('chat.home') }}" class="p-2 hover:bg-gray-800 rounded-full text-gray-300">
+      <i data-lucide="arrow-left" class="w-5 h-5"></i>
+    </a>
+    <h2 class="text-xl font-light text-white">Invite People</h2>
+    <div class="w-9"></div>
   </div>
 
-  <!-- Central Invitation Form -->
-  <form action="{{ url_for('user.invite') }}" method="POST" class="my-auto space-y-6 w-full animate-fade-in">
-    <div>
-      <input 
-        type="email" 
-        id="email" 
-        name="email" 
-        placeholder="Enter Gmail" 
-        required 
-        class="w-full bg-transparent border-2 border-orange-500/80 focus:border-orange-500 text-white placeholder-orange-500/80 rounded-2xl px-6 py-4 text-base outline-none transition shadow-sm" 
-      />
-    </div>
+  <!-- Main Content Area -->
+  <div class="flex-1 px-6 py-8 flex flex-col justify-center animate-fade-in">
+    <form action="{{ url_for('user.invite') }}" method="POST" class="space-y-6">
+      <div>
+        <label for="email" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Recipient Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email" 
+          placeholder="Enter Gmail" 
+          required 
+          class="w-full bg-gray-900 border border-orange-500/60 focus:border-orange-500 text-white placeholder-gray-500 rounded-2xl px-5 py-4 text-base outline-none transition shadow-sm" 
+        />
+      </div>
 
-    <button 
-      type="submit" 
-      class="w-full bg-[#ea580c] hover:bg-orange-500 text-white font-semibold py-4 rounded-2xl shadow-lg shadow-orange-600/30 active:scale-[0.98] transition duration-200 text-base tracking-wide"
-    >
-      Send Passcode
-    </button>
-  </form>
+      <button 
+        type="submit" 
+        class="w-full bg-[#ea580c] hover:bg-orange-500 text-white font-semibold py-4 rounded-2xl shadow-lg shadow-orange-600/30 active:scale-[0.98] transition duration-200 text-base tracking-wide flex items-center justify-center gap-2"
+      >
+        <i data-lucide="send" class="w-4 h-4"></i> Send Passcode
+      </button>
+    </form>
+  </div>
 
-  <!-- Bottom Navigation Link -->
-  <div class="pb-6 text-center">
-    <a href="{{ url_for('chat.home') }}" class="text-sm font-medium text-gray-400 hover:text-orange-400 transition inline-flex items-center gap-1.5">
-      <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Chats
+  <!-- Bottom Nav matching Notifications theme -->
+  <div class="border-t border-gray-900 py-3 px-6 flex justify-between items-center bg-gray-900">
+    <a href="{{ url_for('chat.home') }}" class="text-gray-500 hover:text-orange-400 flex flex-col items-center gap-1">
+      <i data-lucide="message-square" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">Chats</span>
+    </a>
+    <a href="{{ url_for('user.notifications') }}" class="text-gray-500 hover:text-orange-400 flex flex-col items-center gap-1">
+      <i data-lucide="bell" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">Notifications</span>
+    </a>
+    <a href="{{ url_for('user.invite') }}" class="text-orange-400 flex flex-col items-center gap-1">
+      <i data-lucide="user-plus" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">Invite</span>
+    </a>
+    <a href="{{ url_for('user.profile') }}" class="text-gray-500 hover:text-orange-400 flex flex-col items-center gap-1">
+      <i data-lucide="user" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">Profile</span>
+    </a>
+    <a href="{{ url_for('user.settings') }}" class="text-gray-500 hover:text-orange-400 flex flex-col items-center gap-1">
+      <i data-lucide="settings" class="w-5 h-5"></i>
+      <span class="text-[10px] font-medium">Settings</span>
     </a>
   </div>
 
