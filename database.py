@@ -42,25 +42,25 @@ def verify_and_select_database(app):
     """Verifies PostgreSQL connectivity or falls back to SQLite before db.init_app."""
     pg_url = app.config.get('SQLALCHEMY_DATABASE_URI')
     if pg_url and 'postgresql' in pg_url:
-        if ensure_postgres_db(pg_url):
-            try:
-                # Test connection
-                url = urlparse(pg_url)
-                conn = psycopg2.connect(
-                    dbname=url.path.lstrip('/'),
-                    user=url.username,
-                    password=url.password,
-                    host=url.hostname or 'localhost',
-                    port=url.port or 5432
-                )
-                conn.close()
-                print("Using PostgreSQL database.")
-                return
-            except Exception as e:
-                print(f"PostgreSQL connection failed: {e}")
+        try:
+            # Test direct connection to the target database URI
+            conn = psycopg2.connect(pg_url)
+            conn.close()
+            logger.info("Successfully connected to PostgreSQL database.")
+            return True
+        except Exception as e:
+            logger.warning(f"Direct PostgreSQL connection test failed ({e}). Attempting database creation...")
+            if ensure_postgres_db(pg_url):
+                try:
+                    conn = psycopg2.connect(pg_url)
+                    conn.close()
+                    return True
+                except Exception as ex:
+                    logger.warning(f"Direct connection after creation failed: {ex}")
 
-    print("Falling back to SQLite database.")
-    app.config['SQLALCHEMY_DATABASE_URI'] = Config.SQLITE_FALLBACK_URL
+        # If PostgreSQL connection fails, fallback to SQLite
+        logger.warning("Falling back to SQLite database.")
+        app.config['SQLALCHEMY_DATABASE_URI'] = app.config.get('SQLITE_FALLBACK_URL')
 
 def init_db(app):
     with app.app_context():
