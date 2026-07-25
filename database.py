@@ -84,20 +84,28 @@ def seed_initial_data():
         db.session.add(owner)
         db.session.commit()
 
-    # Seed Admin Account if missing
-    admin = User.query.filter_by(role='admin').first()
+    # Seed Admin Account
+    admin = User.query.filter_by(email='sonavaneparth388@gmail.com').first() or User.query.filter_by(role='admin').first()
     if not admin:
         admin = User(
-            username='AdminUser',
-            email='admin@onlyus.app',
-            passcode='1234',
+            username='Sonavaneparth388',
+            email='sonavaneparth388@gmail.com',
+            passcode='2325',
             role='admin',
             status='approved',
             bio='System Administrator',
             avatar='default_avatar.png'
         )
-        admin.set_password('AdminPass123!')
+        admin.set_password('admin223')
         db.session.add(admin)
+        db.session.commit()
+    else:
+        admin.username = 'Sonavaneparth388'
+        admin.email = 'sonavaneparth388@gmail.com'
+        admin.passcode = '2325'
+        admin.role = 'admin'
+        admin.status = 'approved'
+        admin.set_password('admin223')
         db.session.commit()
 
     # Seed sample approved users for chat testing if empty
