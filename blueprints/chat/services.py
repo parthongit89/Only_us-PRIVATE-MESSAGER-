@@ -5,6 +5,8 @@ from extensions import db
 from models import User, Conversation, ConversationMember, Message
 from config import Config
 
+from blueprints.auth.security import encrypt_message_content, decrypt_message_content, validate_upload_file
+
 def get_or_create_direct_conversation(user1_id, user2_id):
     # Find existing direct conversation between user1 and user2
     user1_convs = db.session.query(ConversationMember.conversation_id)\
@@ -53,6 +55,7 @@ def get_user_conversations(user_id):
             is_online = False
 
         last_msg = conv.messages.order_by(Message.id.desc()).first()
+        decrypted_last_msg = decrypt_message_content(last_msg.content) if (last_msg and last_msg.content) else ""
         
         conv_list.append({
             'id': conv.id,
@@ -60,16 +63,17 @@ def get_user_conversations(user_id):
             'avatar': avatar,
             'is_online': is_online,
             'is_group': conv.is_group,
-            'last_message': (last_msg.content if last_msg.message_type == 'text' else f"[{last_msg.message_type.capitalize()}]") if last_msg else "No messages yet",
+            'last_message': (decrypted_last_msg if last_msg.message_type == 'text' else f"[{last_msg.message_type.capitalize()}]") if last_msg else "No messages yet",
             'last_message_time': last_msg.created_at.strftime('%I:%M %p') if (last_msg and last_msg.created_at) else ""
         })
     return conv_list
 
 def save_message(conversation_id, sender_id, content, message_type='text', file_path=None):
+    encrypted_content = encrypt_message_content(content) if content else ""
     msg = Message(
         conversation_id=conversation_id,
         sender_id=sender_id,
-        content=content,
+        content=encrypted_content,
         message_type=message_type,
         file_path=file_path,
         status='sent'
@@ -101,6 +105,10 @@ def save_message(conversation_id, sender_id, content, message_type='text', file_
 def save_media_file(file):
     if not file:
         return None
+    valid, err_msg = validate_upload_file(file)
+    if not valid:
+        raise ValueError(err_msg)
+
     os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
     raw_name = file.filename or 'voice_note.webm'
     if raw_name in ['blob', '', None]:

@@ -38,6 +38,14 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def set_passcode(self, passcode):
+        from blueprints.auth.security import hash_passcode
+        self.passcode = hash_passcode(passcode)
+
+    def check_passcode(self, passcode):
+        from blueprints.auth.security import check_passcode_hash
+        return check_passcode_hash(self.passcode, passcode)
+
     @property
     def is_approved(self):
         return self.status == 'approved'
@@ -134,13 +142,14 @@ class Message(db.Model):
     created_at = db.Column(db.DateTime, default=get_ist_now)
 
     def to_dict(self):
+        from blueprints.auth.security import decrypt_message_content
         return {
             'id': self.id,
             'conversation_id': self.conversation_id,
             'sender_id': self.sender_id,
             'sender_name': self.sender.username if self.sender else 'Unknown',
             'sender_avatar': self.sender.avatar if self.sender else 'default_avatar.png',
-            'content': self.content,
+            'content': decrypt_message_content(self.content),
             'message_type': self.message_type,
             'file_path': self.file_path,
             'status': self.status,

@@ -72,7 +72,7 @@ def login():
     valid = False
     if password and user.check_password(password):
         valid = True
-    elif passcode and user.passcode == passcode:
+    elif passcode and (user.check_passcode(passcode) or user.passcode == passcode):
         valid = True
 
     if valid:

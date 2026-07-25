@@ -11,3 +11,5 @@ Werkzeug==3.0.3
 email-validator==2.1.1
 gunicorn==22.0.0
 eventlet==0.35.2
+cryptography==49.0.0
+
