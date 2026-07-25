@@ -7,31 +7,41 @@
 
   <!-- Header matching Notifications theme -->
   <div class="bg-gradient-to-b from-gray-900 to-gray-950 px-6 pt-10 pb-6 flex items-center justify-between border-b border-gray-800">
-    <a href="{{ url_for('chat.home') }}" class="p-2 hover:bg-gray-800 rounded-full text-gray-300">
+    <a href="{{ url_for('chat.home') }}" class="p-2 hover:bg-gray-800 rounded-full text-gray-300 transition">
       <i data-lucide="arrow-left" class="w-5 h-5"></i>
     </a>
     <h2 class="text-xl font-light text-white">Invite People</h2>
     <div class="w-9"></div>
   </div>
 
-  <!-- Main Content Area -->
-  <div class="flex-1 px-6 py-8 flex flex-col justify-center animate-fade-in">
+  <!-- Main Content Area (Moved Up for Professional App Layout) -->
+  <div class="flex-1 px-6 pt-6 pb-4 flex flex-col justify-start overflow-y-auto animate-fade-in">
+    
+    <!-- Info Hero Badge -->
+    <div class="mb-6 p-4 rounded-2xl bg-orange-500/10 border border-orange-500/20 text-orange-200 text-xs flex items-start gap-3">
+      <i data-lucide="sparkles" class="w-5 h-5 text-orange-400 shrink-0 mt-0.5"></i>
+      <p class="leading-relaxed">Invite your friends to OnlyUs. They will receive a real-time email notification with their secret 4-digit passcode for login access.</p>
+    </div>
+
     <form action="{{ url_for('user.invite') }}" method="POST" class="space-y-6">
       <div>
-        <label for="email" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Recipient Email</label>
-        <input 
-          type="email" 
-          id="email" 
-          name="email" 
-          placeholder="Enter Gmail" 
-          required 
-          class="w-full bg-gray-900 border border-orange-500/60 focus:border-orange-500 text-white placeholder-gray-500 rounded-2xl px-5 py-4 text-base outline-none transition shadow-sm" 
-        />
+        <label for="email" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Recipient Email</label>
+        <div class="relative">
+          <i data-lucide="mail" class="w-5 h-5 text-gray-500 absolute left-4 top-1/2 -translate-y-1/2"></i>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            placeholder="Enter Gmail (e.g. friend@gmail.com)" 
+            required 
+            class="w-full bg-gray-900 border border-gray-700 focus:border-orange-500 text-white placeholder-gray-500 rounded-2xl pl-12 pr-5 py-4 text-sm outline-none transition shadow-sm focus:ring-2 focus:ring-orange-500/20" 
+          />
+        </div>
       </div>
 
       <button 
         type="submit" 
-        class="w-full bg-[#ea580c] hover:bg-orange-500 text-white font-semibold py-4 rounded-2xl shadow-lg shadow-orange-600/30 active:scale-[0.98] transition duration-200 text-base tracking-wide flex items-center justify-center gap-2"
+        class="w-full bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-semibold py-4 rounded-2xl shadow-lg shadow-orange-600/30 active:scale-[0.98] transition duration-200 text-base tracking-wide flex items-center justify-center gap-2"
       >
         <i data-lucide="send" class="w-4 h-4"></i> Send Passcode
       </button>
