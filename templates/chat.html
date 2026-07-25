@@ -62,7 +62,7 @@
               <i data-lucide="file-text" class="w-4 h-4"></i> Download Attachment
             </a>
           {% else %}
-            <p class="text-sm font-medium">{{ msg.content }}</p>
+            <p class="text-sm font-medium">{{ msg.decrypted_content }}</p>
           {% endif %}
           <span class="block text-[10px] {% if is_self %}text-orange-200{% else %}text-gray-400{% endif %} text-right mt-1">{{ msg.created_at.strftime('%I:%M %p') }}</span>
         </div>

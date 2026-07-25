@@ -141,15 +141,19 @@ class Message(db.Model):
     status = db.Column(db.String(20), default='sent')  # sent, delivered, read
     created_at = db.Column(db.DateTime, default=get_ist_now)
 
-    def to_dict(self):
+    @property
+    def decrypted_content(self):
         from blueprints.auth.security import decrypt_message_content
+        return decrypt_message_content(self.content)
+
+    def to_dict(self):
         return {
             'id': self.id,
             'conversation_id': self.conversation_id,
             'sender_id': self.sender_id,
             'sender_name': self.sender.username if self.sender else 'Unknown',
             'sender_avatar': self.sender.avatar if self.sender else 'default_avatar.png',
-            'content': decrypt_message_content(self.content),
+            'content': self.decrypted_content,
             'message_type': self.message_type,
             'file_path': self.file_path,
             'status': self.status,
