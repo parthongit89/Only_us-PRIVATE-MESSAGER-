@@ -66,8 +66,9 @@ function initSocketChat(conversationId, currentUserId, currentUsername) {
         });
     }
 
-    // Voice Message Feature Setup
+    // Voice Message & Image Lightbox Setup
     setupVoiceRecorder(conversationId);
+    setupImageLightbox();
 }
 
 function uploadMediaFile(fileObj, conversationId, inputElementToReset) {
@@ -198,7 +199,7 @@ function appendMessageToContainer(msg, currentUserId) {
 
     let contentHtml = '';
     if (msg.message_type === 'image' && msg.file_path) {
-        contentHtml = `<img src="/static/${msg.file_path}" class="max-w-xs rounded-xl shadow-md mb-1 object-cover" />`;
+        contentHtml = `<img src="/static/${msg.file_path}" class="chat-lightbox-img max-w-xs rounded-xl shadow-md mb-1 object-cover cursor-pointer hover:opacity-95 active:scale-95 transition" />`;
     } else if (msg.message_type === 'audio' && msg.file_path) {
         contentHtml = `
             <div class="flex flex-col gap-1">
@@ -225,6 +226,41 @@ function appendMessageToContainer(msg, currentUserId) {
     if (window.lucide) {
         lucide.createIcons();
     }
+}
+
+function setupImageLightbox() {
+    const modal = document.getElementById('imageLightboxModal');
+    const lightboxImg = document.getElementById('lightboxImage');
+    const downloadBtn = document.getElementById('downloadLightboxBtn');
+    const closeBtn = document.getElementById('closeLightboxBtn');
+
+    if (!modal || !lightboxImg) return;
+
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('chat-lightbox-img')) {
+            lightboxImg.src = e.target.src;
+            if (downloadBtn) downloadBtn.href = e.target.src;
+            modal.classList.remove('hidden');
+        }
+    });
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+    }
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.add('hidden');
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+            modal.classList.add('hidden');
+        }
+    });
 }
 
 function escapeHtml(str) {
