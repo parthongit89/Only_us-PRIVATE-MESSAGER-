@@ -1,5 +1,8 @@
 import logging
-import psycopg2
+try:
+    import psycopg2
+except Exception:
+    psycopg2 = None
 from urllib.parse import urlparse
 from sqlalchemy import create_engine
 from extensions import db
@@ -10,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 def ensure_postgres_db(pg_url):
     """Checks if PostgreSQL database exists, and creates it if missing."""
+    if not psycopg2:
+        return False
     try:
         url = urlparse(pg_url)
         dbname = url.path.lstrip('/')
