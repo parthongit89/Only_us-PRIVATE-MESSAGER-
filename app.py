@@ -28,7 +28,10 @@ def create_app(config_class=Config):
     app.register_blueprint(user_bp)
 
     # Initialize and seed database
-    init_db(app)
+    try:
+        init_db(app)
+    except Exception as e:
+        print(f"Database init warning: {e}")
 
     return app
 

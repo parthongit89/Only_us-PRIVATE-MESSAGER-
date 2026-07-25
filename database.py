@@ -1,6 +1,7 @@
 import logging
 import psycopg2
 from urllib.parse import urlparse
+from sqlalchemy import create_engine
 from extensions import db
 from models import User, AccountRequest, Conversation, ConversationMember, Message, Notification
 from config import Config
@@ -38,28 +39,21 @@ def ensure_postgres_db(pg_url):
         logger.warning(f"Could not auto-create PostgreSQL database: {e}")
         return False
 
-from sqlalchemy import create_engine
-
 def verify_and_select_database(app):
     """Verifies PostgreSQL connectivity or falls back to SQLite before db.init_app."""
     pg_url = app.config.get('SQLALCHEMY_DATABASE_URI')
     if pg_url and 'postgresql' in pg_url:
-        try:
-            # Test direct connection using SQLAlchemy engine
-            engine = create_engine(pg_url)
-            with engine.connect() as conn:
-                logger.info("Successfully connected to PostgreSQL database.")
-            engine.dispose()
-            return True
-        except Exception as e:
-            logger.warning(f"Direct PostgreSQL connection test failed ({e}). Attempting database creation...")
-            if ensure_postgres_db(pg_url):
-                try:
-                    engine = create_engine(pg_url)
-                    with engine.connect() as conn:
-                        return True
-                except Exception as ex:
-                    logger.warning(f"Direct connection after creation failed: {ex}")
+        for attempt in range(3):
+            try:
+                engine = create_engine(pg_url, pool_pre_ping=True)
+                with engine.connect() as conn:
+                    logger.info("Successfully connected to PostgreSQL database.")
+                engine.dispose()
+                return True
+            except Exception as e:
+                logger.warning(f"PostgreSQL connection attempt {attempt+1} failed: {e}")
+                import time
+                time.sleep(1)
 
         # If PostgreSQL connection fails, fallback to SQLite
         logger.warning("Falling back to SQLite database.")
