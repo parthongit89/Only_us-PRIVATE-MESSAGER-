@@ -101,6 +101,11 @@ function setupVoiceRecorder(conversationId) {
     if (!micBtn) return;
 
     micBtn.addEventListener('click', async () => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('Voice recording requires a secure connection (HTTPS or http://localhost). Modern browsers restrict microphone access over plain HTTP IP addresses.');
+            return;
+        }
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             audioChunks = [];

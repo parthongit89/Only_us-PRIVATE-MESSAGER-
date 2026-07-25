@@ -48,39 +48,47 @@ def start_chat(target_user_id):
 @chat_bp.route('/chat/upload', methods=['POST'])
 @login_required
 def upload_file():
-    if 'file' not in request.files:
-        return jsonify({'status': 'error', 'message': 'No file attached'}), 400
-    
-    file = request.files['file']
-    conversation_id = request.form.get('conversation_id')
+    try:
+        if 'file' not in request.files:
+            return jsonify({'status': 'error', 'message': 'No file attached'}), 400
+        
+        file = request.files['file']
+        raw_conv_id = request.form.get('conversation_id')
+        if not raw_conv_id:
+            return jsonify({'status': 'error', 'message': 'Missing conversation ID'}), 400
 
-    if file and conversation_id:
-        relative_path = save_media_file(file)
-        if relative_path:
-            content_type = file.content_type or ''
-            filename_lower = file.filename.lower() if file.filename else ''
-            
-            if content_type.startswith('image/'):
-                msg_type = 'image'
-            elif content_type.startswith('audio/') or any(filename_lower.endswith(ext) for ext in ['.webm', '.wav', '.mp3', '.ogg', '.m4a']):
-                msg_type = 'audio'
-            elif content_type.startswith('video/') or any(filename_lower.endswith(ext) for ext in ['.mp4', '.mov']):
-                msg_type = 'video'
-            else:
-                msg_type = 'file'
+        conversation_id = int(raw_conv_id)
 
-            msg = save_message(
-                conversation_id=conversation_id,
-                sender_id=current_user.id,
-                content='',
-                message_type=msg_type,
-                file_path=relative_path
-            )
+        if file:
+            relative_path = save_media_file(file)
+            if relative_path:
+                content_type = file.content_type or ''
+                filename_lower = file.filename.lower() if file.filename else ''
+                
+                if content_type.startswith('image/'):
+                    msg_type = 'image'
+                elif content_type.startswith('audio/') or any(filename_lower.endswith(ext) for ext in ['.webm', '.wav', '.mp3', '.ogg', '.m4a']):
+                    msg_type = 'audio'
+                elif content_type.startswith('video/') or any(filename_lower.endswith(ext) for ext in ['.mp4', '.mov']):
+                    msg_type = 'video'
+                else:
+                    msg_type = 'file'
 
-            msg_dict = msg.to_dict()
-            room = f"conversation_{conversation_id}"
-            socketio.emit('new_message', msg_dict, room=room)
+                msg = save_message(
+                    conversation_id=conversation_id,
+                    sender_id=current_user.id,
+                    content='',
+                    message_type=msg_type,
+                    file_path=relative_path
+                )
 
-            return jsonify({'status': 'success', 'message': msg_dict})
+                msg_dict = msg.to_dict()
+                room = f"conversation_{conversation_id}"
+                socketio.emit('new_message', msg_dict, room=room)
 
-    return jsonify({'status': 'error', 'message': 'Upload failed'}), 400
+                return jsonify({'status': 'success', 'message': msg_dict})
+
+        return jsonify({'status': 'error', 'message': 'Upload failed'}), 400
+    except Exception as e:
+        print(f"Upload handler exception: {e}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
