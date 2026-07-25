@@ -33,6 +33,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
   <!-- App Stylesheet -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <!-- PWA Manifest & App Icons -->
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+  <meta name="theme-color" content="#090d16">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   {% block extra_head %}{% endblock %}
 </head>
 <body class="bg-gray-950 min-h-screen text-gray-100 font-sans selection:bg-orange-500 selection:text-white">
@@ -64,6 +71,9 @@
           </div>
         </div>
         <nav class="mt-6 flex flex-col gap-2">
+          <button id="pwaInstallBtn" class="hidden flex items-center gap-3 px-4 py-3 rounded-xl bg-orange-500/20 text-orange-400 border border-orange-500/40 font-medium hover:bg-orange-500/30 transition w-full text-left my-1">
+            <i data-lucide="download" class="w-5 h-5 text-orange-400"></i> Install OnlyUs App
+          </button>
           <a href="{{ url_for('chat.home') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-orange-500/10 hover:text-orange-400 text-gray-300 font-medium transition">
             <i data-lucide="message-square" class="w-5 h-5 text-orange-400"></i> Chats
           </a>
@@ -114,6 +124,40 @@
   <!-- App Main Scripts -->
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   <script>lucide.createIcons();</script>
+
+  <!-- PWA Service Worker & Install Prompt Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register("{{ url_for('static', filename='sw.js') }}")
+          .then(reg => console.log('PWA Service Worker registered'))
+          .catch(err => console.log('PWA Service Worker error:', err));
+      });
+    }
+
+    let deferredPrompt;
+    const installBtn = document.getElementById('pwaInstallBtn');
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (installBtn) {
+        installBtn.classList.remove('hidden');
+      }
+    });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
+            installBtn.classList.add('hidden');
+          }
+          deferredPrompt = null;
+        }
+      });
+    }
+  </script>
   {% block extra_scripts %}{% endblock %}
 </body>
 </html>
