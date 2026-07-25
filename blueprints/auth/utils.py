@@ -11,8 +11,44 @@ def generate_otp(length=6):
 def generate_4digit_passcode():
     return ''.join(random.choices(string.digits, k=4))
 
+import json
+import urllib.request
+import urllib.error
+
+def send_via_sendgrid(to_email, subject, body):
+    api_key = Config.SENDGRID_API_KEY
+    if not api_key:
+        return False
+    
+    sender_email = getattr(Config, 'SMTP_USERNAME', 'parthongit89@gmail.com') or 'parthongit89@gmail.com'
+    url = 'https://api.sendgrid.com/v3/mail/send'
+    payload = {
+        "personalizations": [{"to": [{"email": to_email}]}],
+        "from": {"email": sender_email, "name": "OnlyUs App"},
+        "subject": subject,
+        "content": [{"type": "text/plain", "value": body}]
+    }
+    
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        req = urllib.request.Request(url, data=json.dumps(payload).encode('utf-8'), headers=headers, method='POST')
+        with urllib.request.urlopen(req) as resp:
+            if resp.status in [200, 202]:
+                print(f"[SENDGRID EMAIL SENT] Subject: '{subject}' to {to_email}")
+                return True
+    except Exception as e:
+        print(f"[SENDGRID WARNING] {e}")
+    return False
+
 def send_email(to_email, subject, body):
-    """Sends email via SMTP using credentials in Config if configured, or prints in development log."""
+    """Sends email via SendGrid API or SMTP using credentials in Config, or prints in development log."""
+    if Config.SENDGRID_API_KEY and send_via_sendgrid(to_email, subject, body):
+        return True
+
     if Config.SMTP_USERNAME and Config.SMTP_PASSWORD:
         try:
             msg = MIMEMultipart()
