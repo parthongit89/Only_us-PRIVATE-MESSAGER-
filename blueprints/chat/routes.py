@@ -57,13 +57,30 @@ def upload_file():
     if file and conversation_id:
         relative_path = save_media_file(file)
         if relative_path:
+            content_type = file.content_type or ''
+            filename_lower = file.filename.lower() if file.filename else ''
+            
+            if content_type.startswith('image/'):
+                msg_type = 'image'
+            elif content_type.startswith('audio/') or any(filename_lower.endswith(ext) for ext in ['.webm', '.wav', '.mp3', '.ogg', '.m4a']):
+                msg_type = 'audio'
+            elif content_type.startswith('video/') or any(filename_lower.endswith(ext) for ext in ['.mp4', '.mov']):
+                msg_type = 'video'
+            else:
+                msg_type = 'file'
+
             msg = save_message(
                 conversation_id=conversation_id,
                 sender_id=current_user.id,
                 content='',
-                message_type='image' if file.content_type.startswith('image/') else 'file',
+                message_type=msg_type,
                 file_path=relative_path
             )
-            return jsonify({'status': 'success', 'message': msg.to_dict()})
+
+            msg_dict = msg.to_dict()
+            room = f"conversation_{conversation_id}"
+            socketio.emit('new_message', msg_dict, room=room)
+
+            return jsonify({'status': 'success', 'message': msg_dict})
 
     return jsonify({'status': 'error', 'message': 'Upload failed'}), 400

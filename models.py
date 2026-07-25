@@ -1,7 +1,12 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from extensions import db, login_manager
+
+IST = timezone(timedelta(hours=5, minutes=30))
+
+def get_ist_now():
+    return datetime.now(IST)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -20,8 +25,8 @@ class User(UserMixin, db.Model):
     avatar = db.Column(db.String(255), default='default_avatar.png')
     bio = db.Column(db.String(255), default='Hey there! I am using OnlyUs.')
     is_online = db.Column(db.Boolean, default=False)
-    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime, default=get_ist_now)
+    created_at = db.Column(db.DateTime, default=get_ist_now)
 
     # Relationships
     messages_sent = db.relationship('Message', backref='sender', lazy='dynamic')
@@ -88,8 +93,8 @@ class Invitation(db.Model):
     created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     recipient_email = db.Column(db.String(120), nullable=False)
     status = db.Column(db.String(20), default='pending')  # pending, accepted, expired
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    expires_at = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(days=7))
+    created_at = db.Column(db.DateTime, default=get_ist_now)
+    expires_at = db.Column(db.DateTime, default=lambda: get_ist_now() + timedelta(days=7))
 
     creator = db.relationship('User', foreign_keys=[created_by_id])
 
@@ -100,7 +105,7 @@ class Conversation(db.Model):
     is_group = db.Column(db.Boolean, default=False)
     name = db.Column(db.String(100), nullable=True)
     avatar = db.Column(db.String(255), default='group_avatar.png')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_ist_now)
 
     members = db.relationship('ConversationMember', backref='conversation', cascade='all, delete-orphan')
     messages = db.relationship('Message', backref='conversation', cascade='all, delete-orphan', lazy='dynamic')
@@ -112,7 +117,7 @@ class ConversationMember(db.Model):
     conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     role = db.Column(db.String(20), default='member')  # member, admin
-    joined_at = db.Column(db.DateTime, default=datetime.utcnow)
+    joined_at = db.Column(db.DateTime, default=get_ist_now)
 
     user = db.relationship('User')
 
@@ -126,7 +131,7 @@ class Message(db.Model):
     message_type = db.Column(db.String(20), default='text')  # text, image, file, audio
     file_path = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(20), default='sent')  # sent, delivered, read
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_ist_now)
 
     def to_dict(self):
         return {
@@ -139,7 +144,7 @@ class Message(db.Model):
             'message_type': self.message_type,
             'file_path': self.file_path,
             'status': self.status,
-            'created_at': self.created_at.strftime('%H:%M')
+            'created_at': self.created_at.strftime('%I:%M %p') if self.created_at else ''
         }
 
 class Notification(db.Model):
@@ -151,7 +156,7 @@ class Notification(db.Model):
     message = db.Column(db.Text, nullable=False)
     type = db.Column(db.String(30), default='system')  # system, request, invite, chat
     is_read = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_ist_now)
 
     def to_dict(self):
         return {
@@ -160,7 +165,7 @@ class Notification(db.Model):
             'message': self.message,
             'type': self.type,
             'is_read': self.is_read,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M')
+            'created_at': self.created_at.strftime('%d %b, %I:%M %p') if self.created_at else ''
         }
 
 class BlockedUser(db.Model):
@@ -169,7 +174,7 @@ class BlockedUser(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     blocker_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     blocked_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_ist_now)
 
     blocker = db.relationship('User', foreign_keys=[blocker_id])
     blocked = db.relationship('User', foreign_keys=[blocked_id])
@@ -182,7 +187,7 @@ class Report(db.Model):
     reported_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     reason = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(20), default='pending')  # pending, reviewed, dismissed
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_ist_now)
 
     reporter = db.relationship('User', foreign_keys=[reporter_id])
     reported_user = db.relationship('User', foreign_keys=[reported_user_id])
@@ -194,5 +199,5 @@ class OTPCode(db.Model):
     email = db.Column(db.String(120), nullable=False)
     code = db.Column(db.String(6), nullable=False)
     is_used = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    expires_at = db.Column(db.DateTime, default=lambda: datetime.utcnow() + timedelta(minutes=10))
+    created_at = db.Column(db.DateTime, default=get_ist_now)
+    expires_at = db.Column(db.DateTime, default=lambda: get_ist_now() + timedelta(minutes=10))

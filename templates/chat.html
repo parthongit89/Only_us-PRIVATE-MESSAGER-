@@ -47,15 +47,24 @@
     {% for msg in messages %}
       {% set is_self = (msg.sender_id == current_user.id) %}
       <div class="flex {% if is_self %}justify-end{% else %}justify-start{% endif %} mb-3 animate-fade-in">
-        <div class="max-w-[75%] {% if is_self %}bg-orange-600 text-white rounded-t-2xl rounded-l-2xl shadow-lg shadow-orange-600/20{% else %}bg-gray-800 border border-gray-700 text-gray-100 rounded-t-2xl rounded-r-2xl{% endif %} p-3">
+        <div class="max-w-[80%] {% if is_self %}bg-orange-600 text-white rounded-t-2xl rounded-l-2xl shadow-lg shadow-orange-600/20{% else %}bg-gray-800 border border-gray-700 text-gray-100 rounded-t-2xl rounded-r-2xl{% endif %} p-3">
           {% if msg.message_type == 'image' and msg.file_path %}
-            <img src="{{ url_for('static', filename=msg.file_path) }}" class="max-w-xs rounded-xl shadow-md mb-1" />
+            <img src="{{ url_for('static', filename=msg.file_path) }}" class="max-w-xs rounded-xl shadow-md mb-1 object-cover" />
+          {% elif msg.message_type == 'audio' and msg.file_path %}
+            <div class="flex flex-col gap-1">
+              <span class="text-[11px] font-semibold opacity-80 flex items-center gap-1"><i data-lucide="mic" class="w-3.5 h-3.5"></i> Voice Note</span>
+              <audio controls src="{{ url_for('static', filename=msg.file_path) }}" class="w-64 max-w-full my-1 rounded-lg"></audio>
+            </div>
+          {% elif msg.message_type == 'video' and msg.file_path %}
+            <video controls src="{{ url_for('static', filename=msg.file_path) }}" class="max-w-xs rounded-xl shadow-md my-1"></video>
           {% elif msg.message_type == 'file' and msg.file_path %}
-            <a href="{{ url_for('static', filename=msg.file_path) }}" target="_blank" class="underline font-medium {% if is_self %}text-orange-100{% else %}text-orange-400{% endif %}">Download Attachment</a>
+            <a href="{{ url_for('static', filename=msg.file_path) }}" target="_blank" class="flex items-center gap-2 underline font-medium {% if is_self %}text-orange-100{% else %}text-orange-400{% endif %}">
+              <i data-lucide="file-text" class="w-4 h-4"></i> Download Attachment
+            </a>
           {% else %}
             <p class="text-sm font-medium">{{ msg.content }}</p>
           {% endif %}
-          <span class="block text-[10px] {% if is_self %}text-orange-200{% else %}text-gray-400{% endif %} text-right mt-1">{{ msg.created_at.strftime('%H:%M') }}</span>
+          <span class="block text-[10px] {% if is_self %}text-orange-200{% else %}text-gray-400{% endif %} text-right mt-1">{{ msg.created_at.strftime('%I:%M %p') }}</span>
         </div>
       </div>
     {% endfor %}
@@ -64,12 +73,36 @@
   <!-- Typing Status Indicator -->
   <div id="typingIndicator" class="px-4 py-1 text-xs text-orange-400 italic bg-gray-950 hidden"></div>
 
+  <!-- Voice Recording Overlay Toolbar -->
+  <div id="voiceRecordingBar" class="p-3 bg-gray-900 border-t border-gray-800 flex items-center justify-between gap-3 hidden">
+    <div class="flex items-center gap-3">
+      <span class="relative flex h-3 w-3">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+        <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+      </span>
+      <span class="text-xs font-semibold text-red-400">Recording...</span>
+      <span id="recordingTimer" class="text-xs font-mono font-bold text-white">00:00</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="cancelVoiceBtn" title="Cancel recording" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-semibold rounded-full transition">
+        Cancel
+      </button>
+      <button id="sendVoiceBtn" title="Send Voice Note" class="p-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-full shadow-lg shadow-orange-500/30 transition">
+        <i data-lucide="send" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </div>
+
   <!-- Bottom Message Input Toolbar -->
-  <div class="p-3 bg-gray-900 border-t border-gray-800 flex items-center gap-2">
-    <label for="mediaInput" class="p-2.5 text-gray-400 hover:text-orange-400 hover:bg-gray-800 rounded-full cursor-pointer transition">
+  <div id="standardInputBar" class="p-3 bg-gray-900 border-t border-gray-800 flex items-center gap-2">
+    <label for="mediaInput" title="Attach file" class="p-2.5 text-gray-400 hover:text-orange-400 hover:bg-gray-800 rounded-full cursor-pointer transition">
       <i data-lucide="paperclip" class="w-5 h-5"></i>
-      <input type="file" id="mediaInput" class="hidden" accept="image/*,application/pdf" />
+      <input type="file" id="mediaInput" class="hidden" accept="*" />
     </label>
+
+    <button id="micBtn" title="Voice Message" class="p-2.5 text-gray-400 hover:text-orange-400 hover:bg-gray-800 rounded-full transition">
+      <i data-lucide="mic" class="w-5 h-5"></i>
+    </button>
 
     <input type="text" id="msgInput" placeholder="Type a message..." class="flex-1 bg-gray-800 border border-gray-700 text-white text-sm px-4 py-2.5 rounded-full outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-500" />
 

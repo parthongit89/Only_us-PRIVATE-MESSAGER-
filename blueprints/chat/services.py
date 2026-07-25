@@ -60,8 +60,8 @@ def get_user_conversations(user_id):
             'avatar': avatar,
             'is_online': is_online,
             'is_group': conv.is_group,
-            'last_message': last_msg.content if last_msg else "No messages yet",
-            'last_message_time': last_msg.created_at.strftime('%H:%M') if last_msg else ""
+            'last_message': (last_msg.content if last_msg.message_type == 'text' else f"[{last_msg.message_type.capitalize()}]") if last_msg else "No messages yet",
+            'last_message_time': last_msg.created_at.strftime('%I:%M %p') if (last_msg and last_msg.created_at) else ""
         })
     return conv_list
 
@@ -82,7 +82,12 @@ def save_media_file(file):
     if not file:
         return None
     os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
-    filename = secure_filename(file.filename)
+    raw_name = file.filename or 'voice_note.webm'
+    if raw_name in ['blob', '', None]:
+        raw_name = 'voice_note.webm'
+    filename = secure_filename(raw_name)
+    if not filename:
+        filename = 'voice_note.webm'
     unique_filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}"
     filepath = os.path.join(Config.UPLOAD_FOLDER, unique_filename)
     file.save(filepath)
