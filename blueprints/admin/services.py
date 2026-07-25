@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timedelta
 from extensions import db
 from models import User, AccountRequest, Invitation, Notification, Report
-from blueprints.auth.utils import send_approval_email, send_rejection_email, send_friend_invite_email
+from blueprints.auth.utils import send_approval_email, send_rejection_email, send_friend_invite_email, generate_4digit_passcode
 
 def approve_request(request_id):
     req = AccountRequest.query.get(request_id)

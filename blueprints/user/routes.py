@@ -81,8 +81,11 @@ def invite():
     if request.method == 'POST':
         friend_email = request.form.get('email')
         if friend_email:
-            inv = generate_invitation(current_user.id, friend_email)
-            flash(f'Invitation sent to {friend_email} with 4-digit passcode ({inv.passcode})!', 'success')
+            try:
+                inv = generate_invitation(current_user.id, friend_email)
+                flash(f'Invitation sent to {friend_email} with 4-digit passcode ({inv.passcode})!', 'success')
+            except Exception as e:
+                flash(f'Could not send invitation: {e}', 'danger')
             return redirect(url_for('user.invite'))
         flash('Please enter a valid Gmail address.', 'danger')
 
