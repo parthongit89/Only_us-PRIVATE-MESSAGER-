@@ -83,7 +83,7 @@ def invite():
         if friend_email:
             try:
                 inv = generate_invitation(current_user.id, friend_email)
-                flash(f'Invitation sent to {friend_email} with 4-digit passcode ({inv.passcode})!', 'success')
+                flash(f'Invitation sent successfully to {friend_email}!', 'success')
             except Exception as e:
                 flash(f'Could not send invitation: {e}', 'danger')
             return redirect(url_for('user.invite'))
