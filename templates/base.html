@@ -64,9 +64,9 @@
     <div id="sideDrawer" class="sidebar-drawer flex flex-col justify-between bg-gray-900 border-r border-gray-800 text-gray-200">
       <div>
         <div class="flex items-center gap-3 pb-6 border-b border-gray-800">
-          <span class="pacifico-regular text-white text-2xl mr-1">OnlyUs</span>
+          <img src="{{ url_for('static', filename='images/OnlyUs.png') }}" class="w-8 h-8 rounded-xl object-contain shadow-md" alt="OnlyUs Logo" />
           <div>
-            <h3 class="font-bold text-white text-lg">{{ current_user.username }}</h3>
+            <h3 class="font-bold text-white text-lg flex items-center gap-2">{{ current_user.username }}</h3>
             <span class="text-xs text-orange-400 font-semibold capitalize">{{ current_user.role }}</span>
           </div>
         </div>
