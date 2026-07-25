@@ -20,7 +20,7 @@ def send_via_sendgrid(to_email, subject, body):
     if not api_key:
         return False
     
-    sender_email = getattr(Config, 'SMTP_USERNAME', 'parthongit89@gmail.com') or 'parthongit89@gmail.com'
+    sender_email = getattr(Config, 'SMTP_USERNAME', 'sonavaneparthgit@gmail.com') or 'sonavaneparthgit@gmail.com'
     url = 'https://api.sendgrid.com/v3/mail/send'
     payload = {
         "personalizations": [{"to": [{"email": to_email}]}],
