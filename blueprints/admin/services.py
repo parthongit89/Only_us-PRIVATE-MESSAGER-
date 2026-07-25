@@ -36,6 +36,32 @@ def approve_request(request_id):
 
     db.session.commit()
 
+    # Automatically initiate direct conversation column between Inviter and Invited user
+    if req.from_email and req.from_email != req.email:
+        inviter = User.query.filter_by(email=req.from_email).first()
+        if inviter and inviter.id != user.id:
+            from blueprints.chat.services import get_or_create_direct_conversation, save_message
+            conv = get_or_create_direct_conversation(inviter.id, user.id)
+            if conv:
+                if conv.messages.count() == 0:
+                    save_message(conv.id, inviter.id, f"Hey {user.username}! Welcome to OnlyUs.")
+                    save_message(conv.id, user.id, "Thanks for the invitation! Happy to connect here.")
+                
+                n1 = Notification(
+                    user_id=inviter.id,
+                    title="Invitation Accepted",
+                    message=f"{user.username} accepted your invitation! Your private chat is ready.",
+                    type="system"
+                )
+                n2 = Notification(
+                    user_id=user.id,
+                    title="Connected with Friend",
+                    message=f"You are now connected with {inviter.username}. Start chatting!",
+                    type="system"
+                )
+                db.session.add_all([n1, n2])
+                db.session.commit()
+
     # Send Approval Email Notification
     send_approval_email(req.email)
     if req.for_email and req.for_email != req.email:
