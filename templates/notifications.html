@@ -7,11 +7,19 @@
 
   <!-- Header -->
   <div class="bg-gradient-to-b from-gray-900 to-gray-950 px-6 pt-10 pb-6 flex items-center justify-between border-b border-gray-800">
-    <a href="{{ url_for('chat.home') }}" class="p-2 hover:bg-gray-800 rounded-full text-gray-300">
+    <a href="{{ url_for('chat.home') }}" class="p-2 hover:bg-gray-800 rounded-full text-gray-300 transition">
       <i data-lucide="arrow-left" class="w-5 h-5"></i>
     </a>
     <h2 class="text-xl font-light text-white">Notifications</h2>
-    <div class="w-9"></div>
+    {% if notifications %}
+      <form action="{{ url_for('user.clear_notifications') }}" method="POST" onsubmit="return confirm('Clear all notifications?');">
+        <button type="submit" title="Clear all notifications" class="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-800 rounded-full transition">
+          <i data-lucide="trash-2" class="w-5 h-5"></i>
+        </button>
+      </form>
+    {% else %}
+      <div class="w-9"></div>
+    {% endif %}
   </div>
 
   <!-- Notification Stream -->

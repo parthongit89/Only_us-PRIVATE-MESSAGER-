@@ -75,6 +75,26 @@ def save_message(conversation_id, sender_id, content, message_type='text', file_
         status='sent'
     )
     db.session.add(msg)
+
+    # Create in-app Notification for recipients
+    sender = User.query.get(sender_id)
+    sender_name = sender.username if sender else "Someone"
+    preview = content if message_type == 'text' else f"[{message_type.capitalize()}]"
+
+    other_members = ConversationMember.query.filter(
+        ConversationMember.conversation_id == conversation_id,
+        ConversationMember.user_id != sender_id
+    ).all()
+
+    for m in other_members:
+        notif = Notification(
+            user_id=m.user_id,
+            title=f"New message from {sender_name}",
+            message=preview,
+            type="message"
+        )
+        db.session.add(notif)
+
     db.session.commit()
     return msg
 

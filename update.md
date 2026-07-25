@@ -18,3 +18,11 @@ fix the menu bar that add one more option invite Friend and use the template - >
 
 
 emails from only us
+
+notification update 
+- all notification activity done by the user 
+- message recevived activity from any user
+- also have delete all notification
+
+bottom menu update 
+- remove this becoz we have the menu icon on right top why user show multiple menu options

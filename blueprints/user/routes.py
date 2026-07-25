@@ -20,6 +20,9 @@ def profile():
         if passcode:
             current_user.passcode = passcode
 
+        notif = Notification(user_id=current_user.id, title="Profile Updated", message="Your profile details were updated successfully.", type="activity")
+        db.session.add(notif)
+
         db.session.commit()
         flash('Profile updated successfully.', 'success')
         return redirect(url_for('user.profile'))
@@ -35,11 +38,18 @@ def settings():
 @login_required
 def notifications():
     notifs = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.id.desc()).all()
-    # Mark all as read
     for n in notifs:
         n.is_read = True
     db.session.commit()
     return render_template('notifications.html', notifications=notifs)
+
+@user_bp.route('/notifications/clear', methods=['POST'])
+@login_required
+def clear_notifications():
+    Notification.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    flash('All notifications cleared.', 'success')
+    return redirect(url_for('user.notifications'))
 
 @user_bp.route('/blocked-users', methods=['GET', 'POST'])
 @login_required
@@ -49,9 +59,17 @@ def blocked_users():
         action = request.form.get('action')
         if action == 'block':
             success, msg = block_user(current_user.id, target_id)
+            if success:
+                notif = Notification(user_id=current_user.id, title="Blocked User", message=msg, type="activity")
+                db.session.add(notif)
+                db.session.commit()
             flash(msg, 'info' if success else 'danger')
         elif action == 'unblock':
             success, msg = unblock_user(current_user.id, target_id)
+            if success:
+                notif = Notification(user_id=current_user.id, title="Unblocked User", message=msg, type="activity")
+                db.session.add(notif)
+                db.session.commit()
             flash(msg, 'success' if success else 'danger')
         return redirect(url_for('user.blocked_users'))
 
@@ -67,6 +85,9 @@ def report_user():
         reason = request.form.get('reason')
         if reported_id and reason:
             submit_report(current_user.id, reported_id, reason)
+            notif = Notification(user_id=current_user.id, title="Report Submitted", message="Your report was submitted for review.", type="activity")
+            db.session.add(notif)
+            db.session.commit()
             flash('Report submitted for review.', 'success')
             return redirect(url_for('user.profile'))
         flash('Reason and target user are required.', 'danger')
@@ -83,6 +104,9 @@ def invite():
         if friend_email:
             try:
                 inv = generate_invitation(current_user.id, friend_email)
+                notif = Notification(user_id=current_user.id, title="Friend Invitation Sent", message=f"Invitation sent to {friend_email}.", type="activity")
+                db.session.add(notif)
+                db.session.commit()
                 flash(f'Invitation sent successfully to {friend_email}!', 'success')
             except Exception as e:
                 flash(f'Could not send invitation: {e}', 'danger')
