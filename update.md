@@ -26,3 +26,7 @@ notification update
 
 bottom menu update 
 - remove this becoz we have the menu icon on right top why user show multiple menu options
+
+update in application logo for installation all template are in template1 folder 
+- extracted from applogo(2).png
+- extracted from applogo.png

@@ -48,34 +48,50 @@
     {% endif %}
 
     <!-- Approved Users Directory to Start New Chat -->
-    <div class="mt-8 pt-4 border-t border-gray-900">
-      <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Start Conversation</h3>
-      <div class="space-y-3">
-        {% for u in users %}
-          <div class="flex items-center justify-between py-2 border-b border-gray-900/50">
-            <div class="flex items-center gap-3">
-              <div class="relative">
-                <div class="w-10 h-10 bg-gray-800 border border-gray-700 rounded-full flex items-center justify-center text-gray-400">
-                  <i data-lucide="user" class="w-5 h-5"></i>
+    {% if users %}
+      <div class="mt-8 pt-4 border-t border-gray-900">
+        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Start Conversation</h3>
+        <div class="space-y-3">
+          {% for u in users %}
+            <div class="flex items-center justify-between py-2 border-b border-gray-900/50">
+              <div class="flex items-center gap-3">
+                <div class="relative">
+                  <div class="w-10 h-10 bg-gray-800 border border-gray-700 rounded-full flex items-center justify-center text-gray-400">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                  </div>
+                  {% if u.is_online %}
+                    <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-gray-950 rounded-full"></span>
+                  {% endif %}
                 </div>
-                {% if u.is_online %}
-                  <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-gray-950 rounded-full"></span>
-                {% endif %}
+                <div>
+                  <h4 class="text-sm font-medium text-gray-200">{{ u.username }}</h4>
+                  <p class="text-xs text-gray-500">{{ u.email }}</p>
+                </div>
               </div>
-              <div>
-                <h4 class="text-sm font-medium text-gray-200">{{ u.username }}</h4>
-                <p class="text-xs text-gray-500">{{ u.email }}</p>
-              </div>
+              <a href="{{ url_for('chat.start_chat', target_user_id=u.id) }}" class="p-2 text-orange-400 hover:bg-orange-500/10 rounded-full transition">
+                <i data-lucide="message-circle" class="w-5 h-5"></i>
+              </a>
             </div>
-            <a href="{{ url_for('chat.start_chat', target_user_id=u.id) }}" class="p-2 text-orange-400 hover:bg-orange-500/10 rounded-full transition">
-              <i data-lucide="message-circle" class="w-5 h-5"></i>
-            </a>
-          </div>
-        {% endfor %}
+          {% endfor %}
+        </div>
       </div>
-    </div>
+    {% endif %}
 
-  </div>
+    <!-- Empty Home Screen State for New Users -->
+    {% if not conversations %}
+      <div class="flex flex-col items-center justify-center min-h-[55vh] text-center px-4 py-8 animate-fade-in">
+        <div class="w-20 h-20 bg-orange-500/10 border border-orange-500/30 rounded-3xl flex items-center justify-center mb-6 shadow-xl shadow-orange-500/10">
+          <i data-lucide="user-plus" class="w-10 h-10 text-orange-400"></i>
+        </div>
+        <h3 class="text-2xl font-light text-white mb-2">Welcome to OnlyUs</h3>
+        <p class="text-xs text-gray-400 max-w-xs mb-8 leading-relaxed">
+          Your private space for messaging trusted friends. Send an invitation to your friends to start chatting!
+        </p>
+        <a href="{{ url_for('user.invite') }}" class="w-full max-w-xs py-4 px-6 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-semibold text-sm rounded-2xl shadow-lg shadow-orange-500/25 flex items-center justify-center gap-3 transition transform hover:scale-[1.02] active:scale-[0.98]">
+          <i data-lucide="user-plus" class="w-5 h-5"></i> Invite Friends
+        </a>
+      </div>
+    {% endif %}
 
   </div>
 
