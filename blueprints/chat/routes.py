@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
-from models import User, Conversation, Message, ConversationMember
+from models import User, Conversation, Message, ConversationMember, Notification
 from extensions import db
 from . import chat_bp
 from .services import get_user_conversations, get_or_create_direct_conversation, save_media_file, save_message

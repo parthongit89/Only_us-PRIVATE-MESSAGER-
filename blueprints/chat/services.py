@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from extensions import db
-from models import User, Conversation, ConversationMember, Message
+from models import User, Conversation, ConversationMember, Message, Notification
 from config import Config
 
 from blueprints.auth.security import encrypt_message_content, decrypt_message_content, validate_upload_file
