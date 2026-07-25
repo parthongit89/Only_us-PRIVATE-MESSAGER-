@@ -10,7 +10,25 @@
 
 /* Glow-01 Soft Top Glow Effect */
 .glow-01-bg {
-  background-image: radial-gradient(ellipse 140% 70% at 50% -10%, rgba(249, 115, 22, 0.45) 0%, rgba(234, 88, 12, 0.2) 45%, rgba(17, 24, 39, 0) 85%);
+  position: relative;
+  overflow: hidden;
+}
+
+.glow-01-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 320px;
+  background: radial-gradient(ellipse 140% 100% at 50% -20%, rgba(249, 115, 22, 0.6) 0%, rgba(234, 88, 12, 0.35) 45%, rgba(249, 115, 22, 0.1) 70%, transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.glow-01-bg > * {
+  position: relative;
+  z-index: 2;
 }
 
 :root {
