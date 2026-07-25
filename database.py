@@ -38,23 +38,26 @@ def ensure_postgres_db(pg_url):
         logger.warning(f"Could not auto-create PostgreSQL database: {e}")
         return False
 
+from sqlalchemy import create_engine
+
 def verify_and_select_database(app):
     """Verifies PostgreSQL connectivity or falls back to SQLite before db.init_app."""
     pg_url = app.config.get('SQLALCHEMY_DATABASE_URI')
     if pg_url and 'postgresql' in pg_url:
         try:
-            # Test direct connection to the target database URI
-            conn = psycopg2.connect(pg_url)
-            conn.close()
-            logger.info("Successfully connected to PostgreSQL database.")
+            # Test direct connection using SQLAlchemy engine
+            engine = create_engine(pg_url)
+            with engine.connect() as conn:
+                logger.info("Successfully connected to PostgreSQL database.")
+            engine.dispose()
             return True
         except Exception as e:
             logger.warning(f"Direct PostgreSQL connection test failed ({e}). Attempting database creation...")
             if ensure_postgres_db(pg_url):
                 try:
-                    conn = psycopg2.connect(pg_url)
-                    conn.close()
-                    return True
+                    engine = create_engine(pg_url)
+                    with engine.connect() as conn:
+                        return True
                 except Exception as ex:
                     logger.warning(f"Direct connection after creation failed: {ex}")
 
