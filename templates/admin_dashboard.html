@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}OnlyUs Admin - Account Requests{% endblock %}
+
+{% block content %}
+<div class="desktop-container bg-gray-900 border border-gray-800 rounded-3xl p-8 shadow-2xl my-8 text-gray-100">
+
+  <!-- Admin Navigation Header -->
+  <div class="flex items-center justify-between pb-6 border-b border-gray-800 mb-6">
+    <div class="flex items-center gap-3">
+      <span class="pacifico-regular text-white text-3xl mr-2">OnlyUs</span>
+      <div>
+        <h1 class="text-2xl font-bold text-white">Admin Approval Portal</h1>
+        <p class="text-xs text-gray-400">Manage pending access requests for OnlyUs</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="{{ url_for('admin.users_list') }}" class="text-sm font-semibold text-gray-300 hover:text-orange-400 transition">Users Directory</a>
+      <a href="{{ url_for('admin.permit') }}" class="text-sm font-semibold text-gray-300 hover:text-orange-400 transition">Permissions</a>
+      <a href="{{ url_for('admin.invitation') }}" class="text-sm font-semibold text-gray-300 hover:text-orange-400 transition">Send Invites</a>
+      <a href="{{ url_for('chat.home') }}" class="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-orange-600/30 transition">Go to App</a>
+    </div>
+  </div>
+
+  <!-- Bulk Action Links matching admin.png design -->
+  <div class="flex justify-end gap-6 mb-6">
+    <form action="{{ url_for('admin.reject_all') }}" method="POST" inline>
+      <button type="submit" class="text-red-400 hover:text-red-300 font-semibold text-sm transition">Reject all</button>
+    </form>
+    <form action="{{ url_for('admin.accept_all') }}" method="POST" inline>
+      <button type="submit" class="text-emerald-400 hover:text-emerald-300 font-semibold text-sm transition">Accept all</button>
+    </form>
+  </div>
+
+  <!-- Requests Card Listing matching admin.png design -->
+  {% if requests %}
+    <div class="space-y-6">
+      {% for req in requests %}
+        <div class="border-2 border-orange-500/60 rounded-xl p-6 flex items-center justify-between bg-gray-950 shadow-md hover:border-orange-400 transition">
+          
+          <!-- Request Info (Left) -->
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-full border-2 border-orange-500 flex items-center justify-center text-orange-400 mt-1">
+              <i data-lucide="user" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-3">
+                <h3 class="text-lg font-medium text-orange-400">Request application for creating Account</h3>
+                {% if req.passcode %}
+                  <span class="px-2.5 py-0.5 bg-gray-800 border border-orange-500/50 text-orange-300 font-mono text-xs rounded-full font-bold">
+                    Passcode: {{ req.passcode }}
+                  </span>
+                {% endif %}
+              </div>
+              
+              {% if req.from_email and req.for_email and req.from_email != req.email %}
+                <div class="flex items-center gap-2 mt-2">
+                  <span class="text-xs text-gray-500">From</span>
+                  <span class="px-3 py-1 bg-orange-950/80 border border-orange-500/30 text-orange-300 rounded-full text-xs font-medium">{{ req.from_email }}</span>
+                </div>
+                <div class="flex items-center gap-2 mt-1">
+                  <span class="text-xs text-gray-500">For</span>
+                  <span class="px-3 py-1 bg-orange-950/80 border border-orange-500/30 text-orange-300 rounded-full text-xs font-medium">{{ req.for_email }}</span>
+                </div>
+              {% else %}
+                <div class="mt-2">
+                  <span class="px-3 py-1 bg-orange-950/80 border border-orange-500/30 text-orange-300 rounded-full text-xs font-medium">{{ req.email }}</span>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Action Capsule Pill (Right) matching admin.png design -->
+          <div class="bg-gray-800 border border-gray-700 rounded-2xl p-4 flex items-center gap-6 shadow-inner">
+            <!-- Accept Form -->
+            <form action="{{ url_for('admin.accept_request', req_id=req.id) }}" method="POST">
+              <button type="submit" class="flex flex-col items-center text-orange-400 hover:text-orange-300 transition">
+                <i data-lucide="user-check" class="w-5 h-5"></i>
+                <span class="text-xs font-semibold mt-1">Accept</span>
+              </button>
+            </form>
+
+            <!-- Reject Form -->
+            <form action="{{ url_for('admin.reject_req', req_id=req.id) }}" method="POST">
+              <button type="submit" class="flex flex-col items-center text-orange-400 hover:text-orange-300 transition">
+                <i data-lucide="x-square" class="w-5 h-5"></i>
+                <span class="text-xs font-semibold mt-1">Rejected</span>
+              </button>
+            </form>
+
+            <!-- Reject or Report Form -->
+            <form action="{{ url_for('admin.report_req', req_id=req.id) }}" method="POST">
+              <button type="submit" class="flex flex-col items-center text-orange-400 hover:text-orange-300 transition">
+                <i data-lucide="file-text" class="w-5 h-5"></i>
+                <span class="text-xs font-semibold mt-1">Reject or Report</span>
+              </button>
+            </form>
+          </div>
+
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-16 bg-gray-950 rounded-2xl border border-dashed border-gray-800">
+      <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-3"></i>
+      <h3 class="text-lg font-semibold text-gray-200">No Pending Requests</h3>
+      <p class="text-sm text-gray-500">All account registration applications have been processed.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

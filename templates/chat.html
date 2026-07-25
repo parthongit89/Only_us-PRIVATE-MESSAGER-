@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}OnlyUs - Chat{% endblock %}
+
+{% block content %}
+<div class="app-container flex flex-col justify-between bg-gray-950 text-gray-100 border border-gray-800 h-full">
+
+  <!-- Chat Top Bar Header -->
+  <div class="bg-gradient-to-b from-gray-900 to-gray-950 px-4 py-3 flex items-center justify-between border-b border-gray-800">
+    <div class="flex items-center gap-3">
+      <a href="{{ url_for('chat.home') }}" class="p-2 hover:bg-gray-800 rounded-full text-gray-300">
+        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+      </a>
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <div class="w-10 h-10 bg-gray-800 border border-gray-700 rounded-full flex items-center justify-center text-gray-300 font-semibold overflow-hidden">
+            {% if recipient and recipient.avatar and recipient.avatar != 'default_avatar.png' %}
+              <img src="{{ url_for('static', filename='images/' + recipient.avatar) }}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='/static/images/OnlyUs.png';" />
+            {% else %}
+              <i data-lucide="user" class="w-5 h-5 text-gray-400"></i>
+            {% endif %}
+          </div>
+          {% if recipient and recipient.is_online %}
+            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-gray-950 rounded-full"></span>
+          {% endif %}
+        </div>
+        <div>
+          <h3 class="font-semibold text-white text-sm">
+            {% if recipient %}{{ recipient.username }}{% else %}{{ conversation.name or 'Group Chat' }}{% endif %}
+          </h3>
+          <span class="text-[11px] text-gray-400">
+            {% if recipient and recipient.is_online %}Active now{% else %}Offline{% endif %}
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-1">
+      <a href="{{ url_for('user.report_user') }}" class="p-2 hover:bg-gray-800 rounded-full text-gray-400 hover:text-red-400">
+        <i data-lucide="flag" class="w-5 h-5"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- Messages History Stream -->
+  <div id="messagesContainer" class="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-950">
+    {% for msg in messages %}
+      {% set is_self = (msg.sender_id == current_user.id) %}
+      <div class="flex {% if is_self %}justify-end{% else %}justify-start{% endif %} mb-3 animate-fade-in">
+        <div class="max-w-[75%] {% if is_self %}bg-orange-600 text-white rounded-t-2xl rounded-l-2xl shadow-lg shadow-orange-600/20{% else %}bg-gray-800 border border-gray-700 text-gray-100 rounded-t-2xl rounded-r-2xl{% endif %} p-3">
+          {% if msg.message_type == 'image' and msg.file_path %}
+            <img src="{{ url_for('static', filename=msg.file_path) }}" class="max-w-xs rounded-xl shadow-md mb-1" />
+          {% elif msg.message_type == 'file' and msg.file_path %}
+            <a href="{{ url_for('static', filename=msg.file_path) }}" target="_blank" class="underline font-medium {% if is_self %}text-orange-100{% else %}text-orange-400{% endif %}">Download Attachment</a>
+          {% else %}
+            <p class="text-sm font-medium">{{ msg.content }}</p>
+          {% endif %}
+          <span class="block text-[10px] {% if is_self %}text-orange-200{% else %}text-gray-400{% endif %} text-right mt-1">{{ msg.created_at.strftime('%H:%M') }}</span>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Typing Status Indicator -->
+  <div id="typingIndicator" class="px-4 py-1 text-xs text-orange-400 italic bg-gray-950 hidden"></div>
+
+  <!-- Bottom Message Input Toolbar -->
+  <div class="p-3 bg-gray-900 border-t border-gray-800 flex items-center gap-2">
+    <label for="mediaInput" class="p-2.5 text-gray-400 hover:text-orange-400 hover:bg-gray-800 rounded-full cursor-pointer transition">
+      <i data-lucide="paperclip" class="w-5 h-5"></i>
+      <input type="file" id="mediaInput" class="hidden" accept="image/*,application/pdf" />
+    </label>
+
+    <input type="text" id="msgInput" placeholder="Type a message..." class="flex-1 bg-gray-800 border border-gray-700 text-white text-sm px-4 py-2.5 rounded-full outline-none focus:ring-2 focus:ring-orange-500 placeholder-gray-500" />
+
+    <button id="sendMsgBtn" class="p-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-full shadow-lg shadow-orange-500/30 transition">
+      <i data-lucide="send" class="w-5 h-5"></i>
+    </button>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/socket_chat.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    initSocketChat({{ conversation.id }}, {{ current_user.id }}, "{{ current_user.username }}");
+    scrollToBottom();
+  });
+</script>
+{% endblock %}

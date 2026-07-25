@@ -1,0 +1,31 @@
+# Secrets & Config
+.env
+*.env
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment / Virtual Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Database files
+*.db
+*.sqlite
+onlyus.db
+instance/
+
+# IDE / Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db

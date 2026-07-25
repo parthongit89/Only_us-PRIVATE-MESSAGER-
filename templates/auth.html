@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}OnlyUs - Access & Login{% endblock %}
+
+{% block content %}
+<div class="app-container flex flex-col justify-between bg-gradient-to-b from-gray-900 via-gray-950 to-black p-8 text-gray-100 border border-gray-800">
+
+  <!-- Top Logo & Title -->
+  <div class="pt-10 text-left">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="pacifico-regular text-white text-3xl">OnlyUs</span>
+    </div>
+    <h1 id="authTitle" class="text-3xl font-light text-white tracking-wide mb-1">Invite My Account</h1>
+    <p class="text-xs text-gray-400">Secure private invitation-only space</p>
+  </div>
+
+  <!-- Request Access Form -->
+  <div id="requestForm" class="w-full space-y-4 my-auto animate-fade-in">
+    <form action="{{ url_for('auth.request_access') }}" method="POST" class="space-y-4">
+      <div>
+        <label class="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Email Address</label>
+        <input type="email" name="email" placeholder="enter your email address" required class="input-field bg-gray-900 border-gray-700 text-white placeholder-gray-500" />
+      </div>
+      <div>
+        <label class="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Password</label>
+        <input type="password" name="password" placeholder="enter your password" required class="input-field bg-gray-900 border-gray-700 text-white placeholder-gray-500" />
+      </div>
+      <div>
+        <label class="block text-[11px] font-semibold text-gray-400 uppercase mb-1">4-Digit Passcode (Optional)</label>
+        <input type="text" name="passcode" maxlength="4" placeholder="e.g. 4321" class="input-field bg-gray-900 border-gray-700 text-white placeholder-gray-500 font-mono tracking-widest" />
+      </div>
+      <div class="pt-2">
+        <label class="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Invited Friend Email (Optional)</label>
+        <input type="email" name="for_email" placeholder="friend's email address" class="input-field bg-gray-900 border-gray-700 text-white placeholder-gray-500 text-xs" />
+      </div>
+
+      <button type="submit" class="btn-primary mt-6 shadow-lg shadow-orange-500/30">Submit Access Request</button>
+    </form>
+
+    <div class="text-center pt-4">
+      <button onclick="toggleAuthMode('login')" class="text-orange-400 font-medium text-sm hover:underline">
+        Already Approved? Log In
+      </button>
+    </div>
+  </div>
+
+  <!-- Approved User Login Form -->
+  <div id="loginForm" class="w-full space-y-4 my-auto hidden animate-fade-in">
+    <form action="{{ url_for('auth.login') }}" method="POST" class="space-y-4">
+      <div>
+        <label class="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Email Address</label>
+        <input type="email" name="email" placeholder="Email Address" required class="input-field bg-gray-900 border-gray-700 text-white placeholder-gray-500" />
+      </div>
+      <div>
+        <label class="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Password</label>
+        <input type="password" name="password" placeholder="Password" class="input-field bg-gray-900 border-gray-700 text-white placeholder-gray-500" />
+      </div>
+      <div>
+        <label class="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Or 4-Digit Passcode</label>
+        <input type="password" name="passcode" maxlength="4" placeholder="4-digit passcode" class="input-field bg-gray-900 border-gray-700 text-white placeholder-gray-500 font-mono" />
+      </div>
+
+      <button type="submit" class="btn-primary mt-6 shadow-lg shadow-orange-500/30">Log In</button>
+    </form>
+
+    <div class="text-center pt-4">
+      <button onclick="toggleAuthMode('request')" class="text-orange-400 font-medium text-sm hover:underline">
+        Request New Account Access
+      </button>
+    </div>
+  </div>
+
+  <!-- Bottom Footer Note -->
+  <div class="pb-4 text-center">
+    <p class="text-xs text-gray-500">Private & Secure • Invitation Only</p>
+  </div>
+
+</div>
+
+<script>
+  function toggleAuthMode(mode) {
+    const reqForm = document.getElementById('requestForm');
+    const loginForm = document.getElementById('loginForm');
+    const title = document.getElementById('authTitle');
+
+    if (mode === 'login') {
+      reqForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+      title.innerText = "Log In to OnlyUs";
+    } else {
+      loginForm.classList.add('hidden');
+      reqForm.classList.remove('hidden');
+      title.innerText = "Invite My Account";
+    }
+  }
+</script>
+{% endblock %}

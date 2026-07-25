@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}OnlyUs Admin - Role Permits{% endblock %}
+
+{% block content %}
+<div class="desktop-container bg-gray-900 border border-gray-800 rounded-3xl p-8 shadow-2xl my-8 text-gray-100">
+
+  <div class="flex items-center justify-between pb-6 border-b border-gray-800 mb-6">
+    <div class="flex items-center gap-3">
+      <a href="{{ url_for('admin.dashboard') }}" class="p-2 hover:bg-gray-800 rounded-full text-gray-300">
+        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+      </a>
+      <h1 class="text-2xl font-bold text-white">Role & Permission Control</h1>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {% for u in users %}
+      <div class="border border-orange-500/30 rounded-2xl p-6 bg-gray-950 shadow-md flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-white text-lg">{{ u.username }}</h3>
+          <p class="text-xs text-gray-400">{{ u.email }}</p>
+          <div class="mt-2">
+            <span class="text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider bg-orange-950 text-orange-400 border border-orange-800">
+              Current Role: {{ u.role }}
+            </span>
+          </div>
+        </div>
+
+        <form action="{{ url_for('admin.permit') }}" method="POST" class="flex items-center gap-2">
+          <input type="hidden" name="user_id" value="{{ u.id }}" />
+          <select name="role" class="px-3 py-2 bg-gray-900 border border-gray-700 text-white rounded-xl text-sm font-medium outline-none focus:border-orange-500">
+            <option value="user" {% if u.role == 'user' %}selected{% endif %}>User</option>
+            <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
+            <option value="owner" {% if u.role == 'owner' %}selected{% endif %}>Owner</option>
+          </select>
+          <button type="submit" class="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-xl text-sm transition shadow-md shadow-orange-600/30">
+            Save
+          </button>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

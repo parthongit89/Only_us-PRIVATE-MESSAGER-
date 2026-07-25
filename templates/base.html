@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}OnlyUs - Private & Secure Messaging{% endblock %}</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- SocketIO CDN -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <!-- Google Fonts Pacifico -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-950 min-h-screen text-gray-100 font-sans selection:bg-orange-500 selection:text-white">
+
+  <!-- Flash Message Banner -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-sm px-4">
+        {% for category, message in messages %}
+          <div class="flash-alert p-4 mb-2 rounded-2xl shadow-xl border border-gray-700 text-sm font-medium text-white flex items-center justify-between transition-all duration-300 {% if category == 'danger' %}bg-red-900/90 border-red-500/50{% elif category == 'success' %}bg-emerald-900/90 border-emerald-500/50{% elif category == 'warning' %}bg-amber-900/90 border-amber-500/50{% else %}bg-orange-900/90 border-orange-500/50{% endif %}">
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="ml-3 font-bold opacity-75 hover:opacity-100">&times;</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Drawer Menu & Overlay -->
+  {% if current_user.is_authenticated %}
+    <div id="drawerOverlay" class="drawer-overlay"></div>
+    <div id="sideDrawer" class="sidebar-drawer flex flex-col justify-between bg-gray-900 border-r border-gray-800 text-gray-200">
+      <div>
+        <div class="flex items-center gap-3 pb-6 border-b border-gray-800">
+          <span class="pacifico-regular text-white text-2xl mr-1">OnlyUs</span>
+          <div>
+            <h3 class="font-bold text-white text-lg">{{ current_user.username }}</h3>
+            <span class="text-xs text-orange-400 font-semibold capitalize">{{ current_user.role }}</span>
+          </div>
+        </div>
+        <nav class="mt-6 flex flex-col gap-2">
+          <a href="{{ url_for('chat.home') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-orange-500/10 hover:text-orange-400 text-gray-300 font-medium transition">
+            <i data-lucide="message-square" class="w-5 h-5 text-orange-400"></i> Chats
+          </a>
+          <a href="{{ url_for('user.profile') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-orange-500/10 hover:text-orange-400 text-gray-300 font-medium transition">
+            <i data-lucide="user" class="w-5 h-5 text-orange-400"></i> Profile
+          </a>
+          <a href="{{ url_for('user.notifications') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-orange-500/10 hover:text-orange-400 text-gray-300 font-medium transition">
+            <i data-lucide="bell" class="w-5 h-5 text-orange-400"></i> Notifications
+          </a>
+          <a href="{{ url_for('user.settings') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-orange-500/10 hover:text-orange-400 text-gray-300 font-medium transition">
+            <i data-lucide="settings" class="w-5 h-5 text-orange-400"></i> Settings
+          </a>
+          <a href="{{ url_for('user.blocked_users') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-orange-500/10 hover:text-orange-400 text-gray-300 font-medium transition">
+            <i data-lucide="shield-alert" class="w-5 h-5 text-orange-400"></i> Blocked Users
+          </a>
+          
+          {% if current_user.is_admin_or_owner %}
+            <div class="pt-4 border-t border-gray-800 my-2">
+              <span class="text-xs uppercase font-bold text-gray-500 px-4 tracking-wider">Admin Panel</span>
+              <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-3 mt-2 rounded-xl hover:bg-orange-500/10 hover:text-orange-400 text-gray-300 font-medium transition">
+                <i data-lucide="check-square" class="w-5 h-5 text-orange-400"></i> Approvals
+              </a>
+              <a href="{{ url_for('admin.users_list') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-orange-500/10 hover:text-orange-400 text-gray-300 font-medium transition">
+                <i data-lucide="users" class="w-5 h-5 text-orange-400"></i> Users Directory
+              </a>
+              <a href="{{ url_for('admin.permit') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-orange-500/10 hover:text-orange-400 text-gray-300 font-medium transition">
+                <i data-lucide="key" class="w-5 h-5 text-orange-400"></i> Role Permits
+              </a>
+              <a href="{{ url_for('admin.invitation') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-orange-500/10 hover:text-orange-400 text-gray-300 font-medium transition">
+                <i data-lucide="mail-plus" class="w-5 h-5 text-orange-400"></i> Send Invitations
+              </a>
+            </div>
+          {% endif %}
+        </nav>
+      </div>
+      <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-950/40 text-red-400 border border-red-900/50 font-semibold hover:bg-red-900/60 transition">
+        <i data-lucide="log-out" class="w-5 h-5"></i> Log Out
+      </a>
+    </div>
+  {% endif %}
+
+  <!-- Main Content Wrapper -->
+  {% block content %}{% endblock %}
+
+  <!-- App Main Scripts -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>lucide.createIcons();</script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

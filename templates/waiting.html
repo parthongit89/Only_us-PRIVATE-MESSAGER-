@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}OnlyUs - Waiting for Admin Approval{% endblock %}
+
+{% block content %}
+<div class="app-container flex flex-col justify-between bg-gradient-to-b from-gray-900 via-gray-950 to-black p-8 text-gray-100 border border-gray-800">
+
+  <div class="pt-12 text-center">
+    <div class="w-20 h-20 bg-amber-950/80 border-2 border-amber-500/40 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-amber-500/20 pulse-logo">
+      <i data-lucide="clock" class="w-10 h-10 text-amber-400"></i>
+    </div>
+    <h1 class="text-2xl font-light text-white mb-2">Wait for Admin Approval</h1>
+    <p class="text-xs text-gray-400 max-w-xs mx-auto leading-relaxed">
+      Your account request for <span class="text-orange-400 font-semibold">{{ email }}</span> has been submitted successfully and is currently in the <span class="text-amber-400 font-bold uppercase">Pending</span> state.
+    </p>
+  </div>
+
+  <div class="my-auto bg-gray-900 border border-gray-800 rounded-2xl p-6 text-center space-y-3">
+    <div class="flex justify-center items-center gap-2 text-xs font-semibold text-gray-300">
+      <i data-lucide="mail" class="w-4 h-4 text-orange-400"></i> Notification Sent
+    </div>
+    <p class="text-xs text-gray-400">
+      An email notification has been dispatched to your email address. Once an Administrator or Owner approves your application, you will receive an approval email and can log in to start messaging.
+    </p>
+  </div>
+
+  <div class="pb-6 text-center">
+    <a href="{{ url_for('auth.auth') }}" class="text-xs text-orange-400 font-medium hover:underline flex items-center justify-center gap-1">
+      <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Login Page
+    </a>
+  </div>
+
+</div>
+{% endblock %}
