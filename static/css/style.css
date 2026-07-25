@@ -8,6 +8,11 @@
   font-style: normal;
 }
 
+/* Glow-01 Soft Top Glow Effect */
+.glow-01-bg {
+  background-image: radial-gradient(ellipse 140% 70% at 50% -10%, rgba(249, 115, 22, 0.45) 0%, rgba(234, 88, 12, 0.2) 45%, rgba(17, 24, 39, 0) 85%);
+}
+
 :root {
   --primary-coral: #f97316;
   --primary-hover: #ea580c;
