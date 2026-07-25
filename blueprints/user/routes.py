@@ -73,3 +73,17 @@ def report_user():
 
     users = User.query.filter(User.id != current_user.id).all()
     return render_template('report.html', users=users)
+
+@user_bp.route('/invite', methods=['GET', 'POST'])
+@login_required
+def invite():
+    from blueprints.admin.services import generate_invitation
+    if request.method == 'POST':
+        friend_email = request.form.get('email')
+        if friend_email:
+            inv = generate_invitation(current_user.id, friend_email)
+            flash(f'Invitation sent to {friend_email} with 4-digit passcode ({inv.passcode})!', 'success')
+            return redirect(url_for('user.invite'))
+        flash('Please enter a valid Gmail address.', 'danger')
+
+    return render_template('user_invite.html')

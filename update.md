@@ -13,3 +13,8 @@ Update in home page that add glow-01 in template1 folder in home page by css cod
 On message to everyone that the media icon not working properly
 also add brand new feature of voice messageing with your enchanments 
 and one more implementation that the follow strictly time zone india
+
+fix the menu bar that add one more option invite Friend and use the template - > invitation.png sends through email throught SMTP method whth 4 digit code (passcode)the template is uploaded called invite.png
+
+
+emails from only us

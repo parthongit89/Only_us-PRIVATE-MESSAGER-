@@ -83,7 +83,7 @@ def reject_all_requests():
 
 def generate_invitation(creator_id, recipient_email, passcode=None):
     code = str(uuid.uuid4())
-    passcode = passcode or '1234'
+    passcode = passcode or generate_4digit_passcode()
     inv = Invitation(
         code=code,
         passcode=passcode,
