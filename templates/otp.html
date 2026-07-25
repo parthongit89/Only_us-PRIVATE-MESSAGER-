@@ -13,14 +13,14 @@
     <p class="text-xs text-gray-400 mt-2">Enter the 6-digit code sent to<br><span class="font-semibold text-orange-400">{{ email }}</span></p>
   </div>
 
-  <form action="{{ url_for('auth.otp') }}" method="POST" class="my-auto space-y-6 animate-fade-in">
-    <div class="flex justify-center gap-2">
-      <input type="text" name="digit" maxlength="1" required class="otp-input w-12 h-14 text-center text-xl font-bold rounded-xl border-2 border-gray-700 focus:border-orange-500 outline-none bg-gray-900 text-white shadow-inner" autofocus />
-      <input type="text" name="digit" maxlength="1" required class="otp-input w-12 h-14 text-center text-xl font-bold rounded-xl border-2 border-gray-700 focus:border-orange-500 outline-none bg-gray-900 text-white shadow-inner" />
-      <input type="text" name="digit" maxlength="1" required class="otp-input w-12 h-14 text-center text-xl font-bold rounded-xl border-2 border-gray-700 focus:border-orange-500 outline-none bg-gray-900 text-white shadow-inner" />
-      <input type="text" name="digit" maxlength="1" required class="otp-input w-12 h-14 text-center text-xl font-bold rounded-xl border-2 border-gray-700 focus:border-orange-500 outline-none bg-gray-900 text-white shadow-inner" />
-      <input type="text" name="digit" maxlength="1" required class="otp-input w-12 h-14 text-center text-xl font-bold rounded-xl border-2 border-gray-700 focus:border-orange-500 outline-none bg-gray-900 text-white shadow-inner" />
-      <input type="text" name="digit" maxlength="1" required class="otp-input w-12 h-14 text-center text-xl font-bold rounded-xl border-2 border-gray-700 focus:border-orange-500 outline-none bg-gray-900 text-white shadow-inner" />
+  <form id="otpForm" action="{{ url_for('auth.otp') }}" method="POST" class="my-auto space-y-6 animate-fade-in">
+    <div class="flex justify-center gap-2" id="otpContainer">
+      <input type="text" name="digit" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="1" required class="otp-input w-11 h-14 text-center text-2xl font-bold rounded-xl border-2 border-gray-700 focus:border-orange-500 outline-none bg-gray-900 text-white shadow-inner transition" autofocus />
+      <input type="text" name="digit" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="1" required class="otp-input w-11 h-14 text-center text-2xl font-bold rounded-xl border-2 border-gray-700 focus:border-orange-500 outline-none bg-gray-900 text-white shadow-inner transition" />
+      <input type="text" name="digit" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="1" required class="otp-input w-11 h-14 text-center text-2xl font-bold rounded-xl border-2 border-gray-700 focus:border-orange-500 outline-none bg-gray-900 text-white shadow-inner transition" />
+      <input type="text" name="digit" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="1" required class="otp-input w-11 h-14 text-center text-2xl font-bold rounded-xl border-2 border-gray-700 focus:border-orange-500 outline-none bg-gray-900 text-white shadow-inner transition" />
+      <input type="text" name="digit" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="1" required class="otp-input w-11 h-14 text-center text-2xl font-bold rounded-xl border-2 border-gray-700 focus:border-orange-500 outline-none bg-gray-900 text-white shadow-inner transition" />
+      <input type="text" name="digit" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="1" required class="otp-input w-11 h-14 text-center text-2xl font-bold rounded-xl border-2 border-gray-700 focus:border-orange-500 outline-none bg-gray-900 text-white shadow-inner transition" />
     </div>
 
     <button type="submit" class="btn-primary">Verify & Proceed</button>
@@ -33,15 +33,52 @@
 </div>
 
 <script>
-  const inputs = document.querySelectorAll('.otp-input');
+  const inputs = Array.from(document.querySelectorAll('.otp-input'));
+  const otpForm = document.getElementById('otpForm');
+
   inputs.forEach((input, index) => {
-    input.addEventListener('keyup', (e) => {
-      if (e.key >= '0' && e.key <= '9') {
-        if (index < inputs.length - 1) inputs[index + 1].focus();
-      } else if (e.key === 'Backspace') {
-        if (index > 0) inputs[index - 1].focus();
+    // Mobile input listener for auto-advancing focus
+    input.addEventListener('input', (e) => {
+      const val = input.value.replace(/[^0-9]/g, '');
+      input.value = val;
+
+      if (val) {
+        if (index < inputs.length - 1) {
+          inputs[index + 1].focus();
+          inputs[index + 1].select();
+        } else {
+          // Auto submit when 6th digit entered
+          const allFilled = inputs.every(i => i.value.length === 1);
+          if (allFilled) otpForm.submit();
+        }
       }
     });
+
+    // Backspace handling
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !input.value && index > 0) {
+        inputs[index - 1].focus();
+        inputs[index - 1].value = '';
+      }
+    });
+
+    // Auto select on focus for easy replacement
+    input.addEventListener('focus', () => {
+      input.select();
+    });
+  });
+
+  // Paste 6-digit OTP code auto-fill & auto-submit support
+  document.getElementById('otpContainer').addEventListener('paste', (e) => {
+    e.preventDefault();
+    const pastedData = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').trim();
+    if (pastedData.length >= 6) {
+      for (let i = 0; i < 6; i++) {
+        inputs[i].value = pastedData[i];
+      }
+      inputs[5].focus();
+      otpForm.submit();
+    }
   });
 
   function resendOtp() {
