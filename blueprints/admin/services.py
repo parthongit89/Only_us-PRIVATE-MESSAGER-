@@ -145,3 +145,81 @@ def update_user_role(user_id, new_role):
     user.role = new_role
     db.session.commit()
     return True, f"Updated {user.username}'s role to {new_role}."
+
+def toggle_user_status(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return False, "User not found."
+    user.status = 'rejected' if user.status == 'approved' else 'approved'
+    db.session.commit()
+    return True, f"User {user.username} status set to {user.status}."
+
+def suspend_user_account(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return False, "User not found."
+    user.status = 'suspended'
+    db.session.commit()
+    return True, f"Suspended account for {user.username}."
+
+def deny_service_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return False, "User not found."
+    user.status = 'denied'
+    db.session.commit()
+    return True, f"Denied service access for {user.username}."
+
+def notify_user_account(user_id, title, message):
+    user = User.query.get(user_id)
+    if not user:
+        return False, "User not found."
+    notif = Notification(
+        user_id=user.id,
+        title=title or "Admin Notice",
+        message=message or "Notification from Administrator.",
+        type="system"
+    )
+    db.session.add(notif)
+    db.session.commit()
+    return True, f"Notification sent to {user.username}."
+
+def report_user_account(admin_id, user_id, reason="Admin Report"):
+    user = User.query.get(user_id)
+    if not user:
+        return False, "User not found."
+    rep = Report(
+        reporter_id=admin_id,
+        reported_user_id=user.id,
+        reason=reason,
+        status='pending'
+    )
+    db.session.add(rep)
+    db.session.commit()
+    
+    from blueprints.auth.utils import send_report_email
+    send_report_email(user.email, reported_item="User Account", reason=reason, report_id=f"REP-{rep.id}")
+    return True, f"Report logged against {user.username}."
+
+def message_user_as_admin(admin_id, user_id, message_text):
+    user = User.query.get(user_id)
+    if not user:
+        return False, "User not found."
+    from blueprints.chat.services import get_or_create_direct_conversation, save_message
+    conv = get_or_create_direct_conversation(admin_id, user.id)
+    if conv:
+        save_message(conv.id, admin_id, message_text or "Hello from Administrator!")
+        return True, f"Admin message dispatched to {user.username}."
+    return False, "Could not open chat conversation."
+
+def deny_user_invitation(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return False, "User not found."
+    # Revoke or reject invitations generated for this user
+    invites = Invitation.query.filter_by(recipient_email=user.email).all()
+    for inv in invites:
+        inv.status = 'expired'
+    db.session.commit()
+    return True, f"Denied invitation permissions for {user.username}."
+

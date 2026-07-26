@@ -1,0 +1,17 @@
+Hello User,
+🎉 example@gmail.com  has invited you to join OnlyUs!
+To accept the invitation and create your account, use the invitation passcode below:
+Invitation Passcode
+5978
+This passcode is valid until {{EXPIRY_DATE_TIME}}.
+To get started:
+Open the OnlyUs app or website.
+Select Join with Invitation.
+Enter the passcode above.
+Complete your registration.
+If you weren't expecting this invitation or don't recognize the sender, you can safely ignore this email.
+Welcome to the OnlyUs community!
+Best regards,
+The OnlyUs Team
+https://only-us-private-messager.onrender.com
+sonavaneparthgit@gmail.com

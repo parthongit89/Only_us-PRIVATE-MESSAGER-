@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}OnlyUs Admin - Current Users{% endblock %}
+
+{% block content %}
+<div class="desktop-container bg-gray-900 border border-gray-800 rounded-3xl p-8 shadow-2xl my-8 text-gray-100">
+
+  <!-- Admin Header Navigation -->
+  <div class="flex items-center justify-between pb-6 border-b border-gray-800 mb-6">
+    <div class="flex items-center gap-3">
+      <span class="pacifico-regular text-white text-3xl mr-2">OnlyUs</span>
+      <div>
+        <h1 class="text-2xl font-bold text-white">Current Users Management</h1>
+        <p class="text-xs text-gray-400">Control active user permissions, notifications, and service access</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-4">
+      <a href="{{ url_for('admin.dashboard') }}" class="text-sm font-semibold text-gray-300 hover:text-orange-400 transition">Requests Portal</a>
+      <a href="{{ url_for('admin.current_users') }}" class="text-sm font-semibold text-orange-400 border-b-2 border-orange-500 pb-1">Current Users</a>
+      <a href="{{ url_for('admin.users_list') }}" class="text-sm font-semibold text-gray-300 hover:text-orange-400 transition">Users Directory</a>
+      <a href="{{ url_for('admin.permit') }}" class="text-sm font-semibold text-gray-300 hover:text-orange-400 transition">Permissions</a>
+      <a href="{{ url_for('admin.invitation') }}" class="text-sm font-semibold text-gray-300 hover:text-orange-400 transition">Send Invites</a>
+      <a href="{{ url_for('chat.home') }}" class="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white font-semibold rounded-xl text-sm shadow-lg shadow-orange-600/30 transition">Go to App</a>
+    </div>
+  </div>
+
+  <!-- Top Search Bar matching top capsule in users.png -->
+  <div class="mb-8">
+    <div class="relative w-full max-w-2xl mx-auto">
+      <input type="text" id="userSearchInput" onkeyup="filterUsers()" placeholder="Search current users by username or email..." class="w-full bg-gray-950 border-2 border-orange-500/50 rounded-2xl px-6 py-3 text-sm text-gray-100 placeholder-gray-500 outline-none focus:border-orange-400 transition shadow-lg">
+      <i data-lucide="search" class="w-5 h-5 text-orange-400 absolute right-5 top-3.5"></i>
+    </div>
+  </div>
+
+  <!-- Users Cards Listing matching users.png design -->
+  {% if users %}
+    <div class="space-y-6" id="usersList">
+      {% for u in users %}
+        <div class="user-card border-2 border-orange-500/50 hover:border-orange-400 rounded-xl p-5 flex items-center justify-between bg-gray-950 shadow-md transition" data-name="{{ u.username|lower }}" data-email="{{ u.email|lower }}">
+          
+          <!-- User Profile & Active Toggle Switch (Left side of users.png) -->
+          <div class="flex items-center gap-5">
+            <!-- User Icon Badge -->
+            <div class="w-11 h-11 rounded-full border-2 border-orange-500 flex items-center justify-center text-orange-400 bg-orange-950/40">
+              <i data-lucide="user" class="w-6 h-6"></i>
+            </div>
+            
+            <!-- User Details -->
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base font-semibold text-white">{{ u.username }}</h3>
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold capitalize {% if u.role == 'owner' %}bg-purple-950 text-purple-300 border border-purple-800{% elif u.role == 'admin' %}bg-blue-950 text-blue-300 border border-blue-800{% else %}bg-gray-800 text-gray-300{% endif %}">
+                  {{ u.role }}
+                </span>
+              </div>
+              <p class="text-xs text-gray-400 mt-0.5">{{ u.email }}</p>
+            </div>
+
+            <!-- Toggle Switch matching orange toggle in users.png -->
+            <form action="{{ url_for('admin.user_toggle_status', user_id=u.id) }}" method="POST" class="ml-4">
+              <button type="submit" title="Toggle User Status" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none {% if u.status == 'approved' %}bg-orange-500{% else %}bg-gray-700{% endif %}">
+                <span class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform {% if u.status == 'approved' %}translate-x-6{% else %}translate-x-1{% endif %}"></span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Action Capsule matching gray rounded bar with orange icons in users.png -->
+          <div class="bg-gray-800/90 border border-gray-700 rounded-2xl px-6 py-3 flex items-center gap-6 shadow-inner">
+            
+            <!-- 1. Report -->
+            <button onclick="openModal('reportModal-{{ u.id }}')" class="flex flex-col items-center group text-orange-400 hover:text-orange-300 transition">
+              <i data-lucide="alert-circle" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+              <span class="text-[11px] font-medium mt-1">Report</span>
+            </button>
+
+            <!-- 2. Notify -->
+            <button onclick="openModal('notifyModal-{{ u.id }}')" class="flex flex-col items-center group text-orange-400 hover:text-orange-300 transition">
+              <i data-lucide="bell-plus" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+              <span class="text-[11px] font-medium mt-1">Notify</span>
+            </button>
+
+            <!-- 3. Suspend -->
+            <form action="{{ url_for('admin.user_suspend', user_id=u.id) }}" method="POST" onsubmit="return confirm('Suspend account for {{ u.username }}?')">
+              <button type="submit" class="flex flex-col items-center group text-orange-400 hover:text-orange-300 transition">
+                <i data-lucide="ban" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                <span class="text-[11px] font-medium mt-1">Suspend</span>
+              </button>
+            </form>
+
+            <!-- 4. Denied service -->
+            <form action="{{ url_for('admin.user_deny_service', user_id=u.id) }}" method="POST" onsubmit="return confirm('Deny service access for {{ u.username }}?')">
+              <button type="submit" class="flex flex-col items-center group text-orange-400 hover:text-orange-300 transition">
+                <i data-lucide="wifi-off" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                <span class="text-[11px] font-medium mt-1 text-center leading-tight">Denied<br>service</span>
+              </button>
+            </form>
+
+            <!-- 5. Message as admin -->
+            <button onclick="openModal('messageModal-{{ u.id }}')" class="flex flex-col items-center group text-orange-400 hover:text-orange-300 transition">
+              <i data-lucide="message-square" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+              <span class="text-[11px] font-medium mt-1 text-center leading-tight">Message as<br>admin</span>
+            </button>
+
+            <!-- 6. Denied Invitation for another user -->
+            <form action="{{ url_for('admin.user_deny_invitation', user_id=u.id) }}" method="POST" onsubmit="return confirm('Deny invitation access for {{ u.username }}?')">
+              <button type="submit" class="flex flex-col items-center group text-orange-400 hover:text-orange-300 transition">
+                <i data-lucide="user-x" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                <span class="text-[11px] font-medium mt-1 text-center leading-tight max-w-[90px]">Denied Invitation<br>for another user</span>
+              </button>
+            </form>
+
+          </div>
+
+        </div>
+
+        <!-- Modals for Report, Notify, Message -->
+        <!-- Report Modal -->
+        <div id="reportModal-{{ u.id }}" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <h3 class="text-lg font-bold text-white mb-2">Report User: {{ u.username }}</h3>
+            <form action="{{ url_for('admin.user_report', user_id=u.id) }}" method="POST" class="space-y-4">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Reason for Report</label>
+                <textarea name="reason" rows="3" required class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-sm text-gray-100 outline-none focus:border-orange-500"></textarea>
+              </div>
+              <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeModal('reportModal-{{ u.id }}')" class="px-4 py-2 bg-gray-800 text-gray-300 text-xs font-semibold rounded-xl hover:bg-gray-700">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-orange-600 text-white text-xs font-semibold rounded-xl hover:bg-orange-500">Submit Report</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Notify Modal -->
+        <div id="notifyModal-{{ u.id }}" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <h3 class="text-lg font-bold text-white mb-2">Notify User: {{ u.username }}</h3>
+            <form action="{{ url_for('admin.user_notify', user_id=u.id) }}" method="POST" class="space-y-4">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Notification Title</label>
+                <input type="text" name="title" required placeholder="Admin Notice" class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-sm text-gray-100 outline-none focus:border-orange-500">
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Notification Message</label>
+                <textarea name="message" rows="3" required placeholder="Enter message..." class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-sm text-gray-100 outline-none focus:border-orange-500"></textarea>
+              </div>
+              <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeModal('notifyModal-{{ u.id }}')" class="px-4 py-2 bg-gray-800 text-gray-300 text-xs font-semibold rounded-xl hover:bg-gray-700">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-orange-600 text-white text-xs font-semibold rounded-xl hover:bg-orange-500">Send Notification</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Message Modal -->
+        <div id="messageModal-{{ u.id }}" class="hidden fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+          <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <h3 class="text-lg font-bold text-white mb-2">Message {{ u.username }} as Admin</h3>
+            <form action="{{ url_for('admin.user_message', user_id=u.id) }}" method="POST" class="space-y-4">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1">Direct Chat Message</label>
+                <textarea name="message" rows="3" required placeholder="Write message to send in direct chat..." class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-sm text-gray-100 outline-none focus:border-orange-500"></textarea>
+              </div>
+              <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeModal('messageModal-{{ u.id }}')" class="px-4 py-2 bg-gray-800 text-gray-300 text-xs font-semibold rounded-xl hover:bg-gray-700">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-orange-600 text-white text-xs font-semibold rounded-xl hover:bg-orange-500">Send Message</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-16 bg-gray-950 rounded-2xl border border-dashed border-gray-800">
+      <i data-lucide="users" class="w-12 h-12 text-gray-500 mx-auto mb-3"></i>
+      <h3 class="text-lg font-semibold text-gray-200">No Users Found</h3>
+    </div>
+  {% endif %}
+
+</div>
+
+<script>
+  function filterUsers() {
+    const query = document.getElementById('userSearchInput').value.toLowerCase();
+    const cards = document.querySelectorAll('.user-card');
+    cards.forEach(card => {
+      const name = card.getAttribute('data-name');
+      const email = card.getAttribute('data-email');
+      if (name.includes(query) || email.includes(query)) {
+        card.style.display = 'flex';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  function openModal(id) {
+    document.getElementById(id).classList.remove('hidden');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+  }
+</script>
+{% endblock %}

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 from extensions import db
-from models import User, AccountRequest, OTPCode, Notification
+from models import User, AccountRequest, OTPCode, Notification, get_ist_now
 from .utils import (
     generate_otp, generate_4digit_passcode, send_otp_email,
     send_request_received_email, send_friend_invite_email
@@ -55,9 +55,10 @@ def create_access_request(email, password=None, passcode=None, from_email=None, 
 
 def generate_and_send_otp(email):
     code = generate_otp(6)
-    expires = datetime.utcnow() + timedelta(minutes=10)
+    now = get_ist_now()
+    expires = now + timedelta(minutes=10)
     
-    otp_record = OTPCode(email=email, code=code, expires_at=expires)
+    otp_record = OTPCode(email=email, code=code, created_at=now, expires_at=expires)
     db.session.add(otp_record)
     db.session.commit()
 
@@ -65,11 +66,13 @@ def generate_and_send_otp(email):
     return code
 
 def verify_otp_code(email, code):
+    now = get_ist_now()
     record = OTPCode.query.filter_by(email=email, code=code, is_used=False)\
-                          .filter(OTPCode.expires_at > datetime.utcnow())\
+                          .filter(OTPCode.expires_at > now)\
                           .order_by(OTPCode.id.desc()).first()
     if record:
         record.is_used = True
         db.session.commit()
         return True
     return False
+

@@ -1,0 +1,11 @@
+Hi,
+Welcome to OnlyUs !
+Your One-Time Password (OTP) for verification is:
+456985
+This code is valid for 10 minutes.
+For your security:
+Never share this OTP with anyone.
+OnlyUs will never ask you for your OTP via phone, email, or message.
+If you didn't request this code, you can safely ignore this email.
+Thank you,
+The OnlyUs Team

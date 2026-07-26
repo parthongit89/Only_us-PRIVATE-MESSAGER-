@@ -7,7 +7,10 @@ from . import admin_bp
 from .services import (
     approve_request, reject_request, report_request,
     approve_all_requests, reject_all_requests,
-    generate_invitation, update_user_role
+    generate_invitation, update_user_role,
+    toggle_user_status, suspend_user_account, deny_service_user,
+    notify_user_account, report_user_account, message_user_as_admin,
+    deny_user_invitation
 )
 
 def admin_required(f):
@@ -73,6 +76,74 @@ def reject_all():
 def users_list():
     all_users = User.query.order_by(User.id.asc()).all()
     return render_template('admin_users.html', users=all_users)
+
+@admin_bp.route('/admin/current-users')
+@admin_bp.route('/admin/currentusers')
+@login_required
+@admin_required
+def current_users():
+    all_users = User.query.order_by(User.id.asc()).all()
+    return render_template('Currentusers.html', users=all_users)
+
+@admin_bp.route('/admin/users/<int:user_id>/toggle-status', methods=['POST'])
+@login_required
+@admin_required
+def user_toggle_status(user_id):
+    success, msg = toggle_user_status(user_id)
+    flash(msg, 'success' if success else 'danger')
+    return redirect(url_for('admin.current_users'))
+
+@admin_bp.route('/admin/users/<int:user_id>/report', methods=['POST'])
+@login_required
+@admin_required
+def user_report(user_id):
+    reason = request.form.get('reason', 'Administrative report flag')
+    success, msg = report_user_account(current_user.id, user_id, reason=reason)
+    flash(msg, 'warning' if success else 'danger')
+    return redirect(url_for('admin.current_users'))
+
+@admin_bp.route('/admin/users/<int:user_id>/notify', methods=['POST'])
+@login_required
+@admin_required
+def user_notify(user_id):
+    title = request.form.get('title', 'Admin Notification')
+    message = request.form.get('message', 'Notice from Administrator.')
+    success, msg = notify_user_account(user_id, title=title, message=message)
+    flash(msg, 'info' if success else 'danger')
+    return redirect(url_for('admin.current_users'))
+
+@admin_bp.route('/admin/users/<int:user_id>/suspend', methods=['POST'])
+@login_required
+@admin_required
+def user_suspend(user_id):
+    success, msg = suspend_user_account(user_id)
+    flash(msg, 'warning' if success else 'danger')
+    return redirect(url_for('admin.current_users'))
+
+@admin_bp.route('/admin/users/<int:user_id>/deny-service', methods=['POST'])
+@login_required
+@admin_required
+def user_deny_service(user_id):
+    success, msg = deny_service_user(user_id)
+    flash(msg, 'danger' if success else 'warning')
+    return redirect(url_for('admin.current_users'))
+
+@admin_bp.route('/admin/users/<int:user_id>/message', methods=['POST'])
+@login_required
+@admin_required
+def user_message(user_id):
+    msg_text = request.form.get('message', 'Hello from Administrator!')
+    success, msg = message_user_as_admin(current_user.id, user_id, msg_text)
+    flash(msg, 'success' if success else 'danger')
+    return redirect(url_for('admin.current_users'))
+
+@admin_bp.route('/admin/users/<int:user_id>/deny-invitation', methods=['POST'])
+@login_required
+@admin_required
+def user_deny_invitation(user_id):
+    success, msg = deny_user_invitation(user_id)
+    flash(msg, 'info' if success else 'danger')
+    return redirect(url_for('admin.current_users'))
 
 @admin_bp.route('/admin/permit', methods=['GET', 'POST'])
 @login_required

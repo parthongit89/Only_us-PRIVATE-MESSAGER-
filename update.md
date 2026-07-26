@@ -30,3 +30,12 @@ bottom menu update
 update in application logo for installation all template are in template1 folder 
 - extracted from applogo(2).png
 - extracted from applogo.png
+
+update in OTP system 
+- OTP when arrived in gmail is expired within sec why fix this
+
+email templates 
+- whenever the conact with user with new template the tepmplate are in template1 folder
+
+update in admin 
+- add new page on admin interface using template users.png as --> Currentusers.html

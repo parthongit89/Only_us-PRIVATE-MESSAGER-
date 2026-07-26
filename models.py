@@ -6,7 +6,7 @@ from extensions import db, login_manager
 IST = timezone(timedelta(hours=5, minutes=30))
 
 def get_ist_now():
-    return datetime.now(IST)
+    return datetime.now(IST).replace(tzinfo=None)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -78,7 +78,7 @@ class AccountRequest(db.Model):
     for_email = db.Column(db.String(120), nullable=True)
     status = db.Column(db.String(20), default='pending', nullable=False)  # pending, approved, rejected, reported
     note = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_ist_now)
 
     def to_dict(self):
         return {

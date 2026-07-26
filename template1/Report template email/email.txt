@@ -1,0 +1,18 @@
+Hello User,
+We're writing to let you know that your account or one of your activities on OnlyUs has been reported by another user.
+Report Details
+Reported Item:  None
+Reason: None
+Report ID: None
+Date: None
+Our moderation team will review this report in accordance with the OnlyUs Community Guidelines.
+What happens next?
+No action may be taken if the report is found to be invalid.
+If a violation is confirmed, appropriate measures may be applied to your account or content.
+If we need more information, we'll contact you by email.
+If you believe this report was made in error or would like to provide additional context, please contact our support team.
+Thank you for helping us keep OnlyUs a safe and respectful community.
+Best regards,
+The OnlyUs Team
+https://only-us-private-messager.onrender.com
+sonavaneparthgit@gmail.com
