@@ -9,7 +9,10 @@ import urllib.error
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.image import MIMEImage
 from config import Config
+
+PUBLIC_HEADER_IMAGE_URL = "https://only-us-private-messager.onrender.com/static/images/email_header.png"
 
 def generate_otp(length=6):
     return ''.join(random.choices(string.digits, k=length))
@@ -18,7 +21,7 @@ def generate_4digit_passcode():
     return ''.join(random.choices(string.digits, k=4))
 
 def load_and_render_template1(folder_name, replacements=None):
-    """Loads HTML template from template1/<folder_name>/email.html and encodes images to inline base64 data URIs."""
+    """Loads HTML template from template1/<folder_name>/email.html and prepares images for CID/hosted rendering."""
     replacements = replacements or {}
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'template1', folder_name))
     template_path = os.path.join(base_dir, 'email.html')
@@ -30,16 +33,9 @@ def load_and_render_template1(folder_name, replacements=None):
         with open(template_path, 'r', encoding='utf-8') as f:
             html = f.read()
 
-        images_dir = os.path.join(base_dir, 'images')
-        if os.path.exists(images_dir):
-            for img_name in os.listdir(images_dir):
-                img_path = os.path.join(images_dir, img_name)
-                if os.path.isfile(img_path):
-                    with open(img_path, 'rb') as img_f:
-                        img_data = base64.b64encode(img_f.read()).decode('utf-8')
-                    mime_type = 'image/png' if img_name.lower().endswith('.png') else 'image/jpeg'
-                    data_uri = f"data:{mime_type};base64,{img_data}"
-                    html = html.replace(f'images/{img_name}', data_uri)
+        import re
+        # Replace relative template image src with CID inline header logo (CID is natively rendered by Gmail, Apple Mail, Outlook)
+        html = re.sub(r'images/[a-zA-Z0-9_\-\.]+\.png', 'cid:header_logo', html)
 
         for key, val in replacements.items():
             html = html.replace(str(key), str(val))
@@ -67,7 +63,23 @@ def send_via_sendgrid(to_email, subject, body, html_body=None):
         "subject": subject,
         "content": content_list
     }
-    
+
+    # Add inline CID image attachment for SendGrid
+    header_img_path = os.path.join(os.path.dirname(__file__), '..', '..', 'static', 'images', 'email_header.png')
+    if os.path.exists(header_img_path):
+        try:
+            with open(header_img_path, 'rb') as f:
+                img_b64 = base64.b64encode(f.read()).decode('utf-8')
+            payload["attachments"] = [{
+                "content": img_b64,
+                "type": "image/png",
+                "filename": "email_header.png",
+                "disposition": "inline",
+                "content_id": "header_logo"
+            }]
+        except Exception as img_err:
+            print(f"[SENDGRID ATTACHMENT WARNING] {img_err}")
+
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
@@ -90,15 +102,29 @@ def send_email(to_email, subject, body, html_body=None):
 
     if Config.SMTP_USERNAME and Config.SMTP_PASSWORD:
         try:
-            msg = MIMEMultipart('alternative')
+            # Create MIMEMultipart('related') to allow inline CID image attachments
+            msg = MIMEMultipart('related')
             msg['From'] = Config.SMTP_USERNAME
             msg['To'] = to_email
             msg['Subject'] = subject
             
-            msg.attach(MIMEText(body, 'plain'))
+            msg_alt = MIMEMultipart('alternative')
+            msg.attach(msg_alt)
+
+            msg_alt.attach(MIMEText(body, 'plain'))
             if html_body:
-                msg.attach(MIMEText(html_body, 'html'))
+                msg_alt.attach(MIMEText(html_body, 'html'))
             
+            # Attach header image with CID <header_logo>
+            header_img_path = os.path.join(os.path.dirname(__file__), '..', '..', 'static', 'images', 'email_header.png')
+            if os.path.exists(header_img_path):
+                with open(header_img_path, 'rb') as img_f:
+                    img_data = img_f.read()
+                img_part = MIMEImage(img_data)
+                img_part.add_header('Content-ID', '<header_logo>')
+                img_part.add_header('Content-Disposition', 'inline', filename='email_header.png')
+                msg.attach(img_part)
+
             server = smtplib.SMTP(Config.SMTP_SERVER, Config.SMTP_PORT)
             server.starttls()
             server.login(Config.SMTP_USERNAME, Config.SMTP_PASSWORD)
