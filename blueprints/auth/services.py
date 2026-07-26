@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
+from flask import session
 from extensions import db
-from models import User, AccountRequest, OTPCode, Notification, get_ist_now
+from models import User, AccountRequest, Notification, get_ist_now
+from .security import hash_text
 from .utils import (
     generate_otp, generate_4digit_passcode, send_otp_email,
     send_request_received_email, send_friend_invite_email
@@ -32,13 +34,14 @@ def create_access_request(email, password=None, passcode=None, from_email=None, 
             req.password_hash = password_hash
         req.passcode = passcode
 
-    # Send notification to admins
+    # Send notification to admins with hashed message summary
     admins = User.query.filter(User.role.in_(['admin', 'owner'])).all()
+    msg_summary = f"Account request from {email}."
     for admin in admins:
         notif = Notification(
             user_id=admin.id,
             title='New Account Request',
-            message=f'{email} requested access to OnlyUs with passcode {passcode}.',
+            message_hash=hash_text(msg_summary),
             type='request'
         )
         db.session.add(notif)
@@ -56,23 +59,25 @@ def create_access_request(email, password=None, passcode=None, from_email=None, 
 def generate_and_send_otp(email):
     code = generate_otp(6)
     now = get_ist_now()
-    expires = now + timedelta(minutes=10)
+    expires_ts = (now + timedelta(minutes=10)).timestamp()
     
-    otp_record = OTPCode(email=email, code=code, created_at=now, expires_at=expires)
-    db.session.add(otp_record)
-    db.session.commit()
+    # Save hashed OTP & expiration in session (No database table persistence needed)
+    session['otp_hash'] = hash_text(str(code))
+    session['otp_expires'] = expires_ts
 
     send_otp_email(email, code)
     return code
 
 def verify_otp_code(email, code):
-    now = get_ist_now()
-    record = OTPCode.query.filter_by(email=email, code=code, is_used=False)\
-                          .filter(OTPCode.expires_at > now)\
-                          .order_by(OTPCode.id.desc()).first()
-    if record:
-        record.is_used = True
-        db.session.commit()
-        return True
+    now_ts = get_ist_now().timestamp()
+    stored_hash = session.get('otp_hash')
+    expires_ts = session.get('otp_expires', 0)
+
+    if stored_hash and expires_ts and now_ts < expires_ts:
+        if hash_text(str(code)) == stored_hash:
+            session.pop('otp_hash', None)
+            session.pop('otp_expires', None)
+            return True
     return False
+
 

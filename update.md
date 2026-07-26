@@ -39,3 +39,10 @@ email templates
 
 update in admin 
 - add new page on admin interface using template users.png as --> Currentusers.html
+
+Database update 
+
+- why are stored data of otp_code no need of that
+- if you store data of notifications in detailed manner fix it on and remove message column should be hashed manner please
+- user id customized 
+Uses : ON0001 on also hash manner for all tables

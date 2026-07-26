@@ -14,8 +14,11 @@ def approve_request(request_id):
     # Create or update approved User
     user = User.query.filter_by(email=req.email).first()
     if not user:
+        from blueprints.auth.security import generate_next_custom_user_id, hash_text
         username = req.email.split('@')[0].capitalize()
+        new_id = generate_next_custom_user_id()
         user = User(
+            id=new_id,
             username=username,
             email=req.email,
             passcode=req.passcode or '1234',
@@ -40,6 +43,7 @@ def approve_request(request_id):
     if req.from_email and req.from_email != req.email:
         inviter = User.query.filter_by(email=req.from_email).first()
         if inviter and inviter.id != user.id:
+            from blueprints.auth.security import hash_text
             from blueprints.chat.services import get_or_create_direct_conversation, save_message
             conv = get_or_create_direct_conversation(inviter.id, user.id)
             if conv:
@@ -50,13 +54,13 @@ def approve_request(request_id):
                 n1 = Notification(
                     user_id=inviter.id,
                     title="Invitation Accepted",
-                    message=f"{user.username} accepted your invitation! Your private chat is ready.",
+                    message_hash=hash_text(f"{user.username} accepted invitation."),
                     type="system"
                 )
                 n2 = Notification(
                     user_id=user.id,
                     title="Connected with Friend",
-                    message=f"You are now connected with {inviter.username}. Start chatting!",
+                    message_hash=hash_text(f"Connected with {inviter.username}."),
                     type="system"
                 )
                 db.session.add_all([n1, n2])
@@ -68,6 +72,7 @@ def approve_request(request_id):
         send_approval_email(req.for_email)
 
     return True, f"Approved request for {req.email}."
+
 
 def reject_request(request_id):
     req = AccountRequest.query.get(request_id)
@@ -174,15 +179,18 @@ def notify_user_account(user_id, title, message):
     user = User.query.get(user_id)
     if not user:
         return False, "User not found."
+    from blueprints.auth.security import hash_text
+    msg_content = message or "Notification from Administrator."
     notif = Notification(
         user_id=user.id,
         title=title or "Admin Notice",
-        message=message or "Notification from Administrator.",
+        message_hash=hash_text(msg_content),
         type="system"
     )
     db.session.add(notif)
     db.session.commit()
     return True, f"Notification sent to {user.username}."
+
 
 def report_user_account(admin_id, user_id, reason="Admin Report"):
     user = User.query.get(user_id)

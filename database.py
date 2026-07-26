@@ -74,6 +74,7 @@ def seed_initial_data():
     owner = User.query.filter_by(role='owner').first()
     if not owner:
         owner = User(
+            id='ON0001',
             username='Owner',
             email='owner@onlyus.app',
             passcode='1234',
@@ -90,6 +91,7 @@ def seed_initial_data():
     admin = User.query.filter_by(email='sonavaneparth388@gmail.com').first() or User.query.filter_by(role='admin').first()
     if not admin:
         admin = User(
+            id='ON0002',
             username='Sonavaneparth388',
             email='sonavaneparth388@gmail.com',
             passcode='2325',
@@ -109,3 +111,5 @@ def seed_initial_data():
         admin.status = 'approved'
         admin.set_password('admin223')
         db.session.commit()
+
+

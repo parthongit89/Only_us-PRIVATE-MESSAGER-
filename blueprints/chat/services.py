@@ -5,7 +5,7 @@ from extensions import db
 from models import User, Conversation, ConversationMember, Message, Notification
 from config import Config
 
-from blueprints.auth.security import encrypt_message_content, decrypt_message_content, validate_upload_file
+from blueprints.auth.security import encrypt_message_content, decrypt_message_content, validate_upload_file, hash_text
 
 def get_or_create_direct_conversation(user1_id, user2_id):
     # Find existing direct conversation between user1 and user2
@@ -94,13 +94,14 @@ def save_message(conversation_id, sender_id, content, message_type='text', file_
         notif = Notification(
             user_id=m.user_id,
             title=f"New message from {sender_name}",
-            message=preview,
+            message_hash=hash_text(preview),
             type="message"
         )
         db.session.add(notif)
 
     db.session.commit()
     return msg
+
 
 def save_media_file(file):
     if not file:

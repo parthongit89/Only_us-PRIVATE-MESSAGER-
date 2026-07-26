@@ -58,6 +58,28 @@ def check_passcode_hash(stored_hash: str, candidate_passcode: str) -> bool:
         return check_password_hash(stored_hash, str(candidate_passcode))
     return stored_hash == str(candidate_passcode)
 
+def hash_text(text: str) -> str:
+    """Computes SHA-256 hash string for data hashing (e.g. notifications, user IDs)."""
+    if not text:
+        return ""
+    return hashlib.sha256(text.encode('utf-8')).hexdigest()
+
+def generate_next_custom_user_id() -> str:
+    """Generates next custom user ID in format ON0001, ON0002, ON0003..."""
+    from models import User
+    users = User.query.all()
+    max_num = 0
+    for u in users:
+        if u.id and str(u.id).startswith('ON'):
+            try:
+                num = int(str(u.id)[2:])
+                if num > max_num:
+                    max_num = num
+            except ValueError:
+                pass
+    return f"ON{max_num + 1:04d}"
+
+
 # Strict Media Extension & Mime-Type Sanitization
 ALLOWED_EXTENSIONS = {
     'png', 'jpg', 'jpeg', 'gif', 'webp',

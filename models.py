@@ -10,12 +10,12 @@ def get_ist_now():
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return User.query.get(str(user_id))
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(32), primary_key=True) # Custom ID e.g. ON0001, ON0002
     username = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256), nullable=False)
@@ -32,6 +32,11 @@ class User(UserMixin, db.Model):
     messages_sent = db.relationship('Message', backref='sender', lazy='dynamic')
     notifications = db.relationship('Notification', backref='user', lazy='dynamic')
     
+    @property
+    def id_hash(self):
+        from blueprints.auth.security import hash_text
+        return hash_text(str(self.id))
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
@@ -57,6 +62,7 @@ class User(UserMixin, db.Model):
     def to_dict(self):
         return {
             'id': self.id,
+            'id_hash': self.id_hash,
             'username': self.username,
             'email': self.email,
             'role': self.role,
@@ -98,7 +104,7 @@ class Invitation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String(64), unique=True, nullable=False)
     passcode = db.Column(db.String(10), nullable=True) # 4-digit passcode
-    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_by_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False)
     recipient_email = db.Column(db.String(120), nullable=False)
     status = db.Column(db.String(20), default='pending')  # pending, accepted, expired
     created_at = db.Column(db.DateTime, default=get_ist_now)
@@ -123,7 +129,7 @@ class ConversationMember(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False)
     role = db.Column(db.String(20), default='member')  # member, admin
     joined_at = db.Column(db.DateTime, default=get_ist_now)
 
@@ -134,7 +140,7 @@ class Message(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=False)
-    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    sender_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False)
     content = db.Column(db.Text, nullable=True)
     message_type = db.Column(db.String(20), default='text')  # text, image, file, audio
     file_path = db.Column(db.String(255), nullable=True)
@@ -164,9 +170,9 @@ class Notification(db.Model):
     __tablename__ = 'notifications'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False)
     title = db.Column(db.String(100), nullable=False)
-    message = db.Column(db.Text, nullable=False)
+    message_hash = db.Column(db.String(256), nullable=False)
     type = db.Column(db.String(30), default='system')  # system, request, invite, chat
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=get_ist_now)
@@ -175,7 +181,7 @@ class Notification(db.Model):
         return {
             'id': self.id,
             'title': self.title,
-            'message': self.message,
+            'message_hash': self.message_hash,
             'type': self.type,
             'is_read': self.is_read,
             'created_at': self.created_at.strftime('%d %b, %I:%M %p') if self.created_at else ''
@@ -185,8 +191,8 @@ class BlockedUser(db.Model):
     __tablename__ = 'blocked_users'
 
     id = db.Column(db.Integer, primary_key=True)
-    blocker_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    blocked_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    blocker_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False)
+    blocked_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=get_ist_now)
 
     blocker = db.relationship('User', foreign_keys=[blocker_id])
@@ -196,8 +202,8 @@ class Report(db.Model):
     __tablename__ = 'reports'
 
     id = db.Column(db.Integer, primary_key=True)
-    reporter_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    reported_user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    reporter_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False)
+    reported_user_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False)
     reason = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(20), default='pending')  # pending, reviewed, dismissed
     created_at = db.Column(db.DateTime, default=get_ist_now)
@@ -205,12 +211,3 @@ class Report(db.Model):
     reporter = db.relationship('User', foreign_keys=[reporter_id])
     reported_user = db.relationship('User', foreign_keys=[reported_user_id])
 
-class OTPCode(db.Model):
-    __tablename__ = 'otp_codes'
-
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), nullable=False)
-    code = db.Column(db.String(6), nullable=False)
-    is_used = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=get_ist_now)
-    expires_at = db.Column(db.DateTime, default=lambda: get_ist_now() + timedelta(minutes=10))

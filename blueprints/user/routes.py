@@ -2,6 +2,7 @@ from flask import render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_required, current_user
 from extensions import db
 from models import User, Notification, BlockedUser, Report
+from blueprints.auth.security import hash_text
 from . import user_bp
 from .services import block_user, unblock_user, submit_report
 
@@ -20,7 +21,7 @@ def profile():
         if passcode:
             current_user.passcode = passcode
 
-        notif = Notification(user_id=current_user.id, title="Profile Updated", message="Your profile details were updated successfully.", type="activity")
+        notif = Notification(user_id=current_user.id, title="Profile Updated", message_hash=hash_text("Profile updated."), type="activity")
         db.session.add(notif)
 
         db.session.commit()
@@ -60,14 +61,14 @@ def blocked_users():
         if action == 'block':
             success, msg = block_user(current_user.id, target_id)
             if success:
-                notif = Notification(user_id=current_user.id, title="Blocked User", message=msg, type="activity")
+                notif = Notification(user_id=current_user.id, title="Blocked User", message_hash=hash_text(msg), type="activity")
                 db.session.add(notif)
                 db.session.commit()
             flash(msg, 'info' if success else 'danger')
         elif action == 'unblock':
             success, msg = unblock_user(current_user.id, target_id)
             if success:
-                notif = Notification(user_id=current_user.id, title="Unblocked User", message=msg, type="activity")
+                notif = Notification(user_id=current_user.id, title="Unblocked User", message_hash=hash_text(msg), type="activity")
                 db.session.add(notif)
                 db.session.commit()
             flash(msg, 'success' if success else 'danger')
@@ -85,7 +86,7 @@ def report_user():
         reason = request.form.get('reason')
         if reported_id and reason:
             submit_report(current_user.id, reported_id, reason)
-            notif = Notification(user_id=current_user.id, title="Report Submitted", message="Your report was submitted for review.", type="activity")
+            notif = Notification(user_id=current_user.id, title="Report Submitted", message_hash=hash_text("Report submitted."), type="activity")
             db.session.add(notif)
             db.session.commit()
             flash('Report submitted for review.', 'success')
@@ -104,7 +105,7 @@ def invite():
         if friend_email:
             try:
                 inv = generate_invitation(current_user.id, friend_email)
-                notif = Notification(user_id=current_user.id, title="Friend Invitation Sent", message=f"Invitation sent to {friend_email}.", type="activity")
+                notif = Notification(user_id=current_user.id, title="Friend Invitation Sent", message_hash=hash_text(f"Invitation sent to {friend_email}."), type="activity")
                 db.session.add(notif)
                 db.session.commit()
                 flash(f'Invitation sent successfully to {friend_email}!', 'success')
@@ -114,3 +115,4 @@ def invite():
         flash('Please enter a valid Gmail address.', 'danger')
 
     return render_template('user_invite.html')
+
