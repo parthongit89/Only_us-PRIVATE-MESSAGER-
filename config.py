@@ -1,10 +1,17 @@
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'onlyus_super_secret_key_2026_privacy_first')
+    
+    # Session & Remember Me Configuration (90 Days Lifetime)
+    PERMANENT_SESSION_LIFETIME = timedelta(days=90)
+    REMEMBER_COOKIE_DURATION = timedelta(days=90)
+    REMEMBER_COOKIE_REFRESH_EACH_REQUEST = True
+
     
     raw_pg_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:parthpostgress89%23%23@localhost:5432/onlyus')
     if raw_pg_url and raw_pg_url.startswith("postgres://"):

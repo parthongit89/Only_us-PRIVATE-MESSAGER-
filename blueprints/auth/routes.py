@@ -1,9 +1,11 @@
+from datetime import timedelta
 from flask import render_template, redirect, url_for, flash, request, session, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from extensions import db
 from models import User, AccountRequest
 from . import auth_bp
 from .services import create_access_request, generate_and_send_otp, verify_otp_code
+
 
 @auth_bp.route('/')
 def starter():
@@ -97,7 +99,8 @@ def otp():
         if verify_otp_code(email, code) or code == '123456': # Demo fallback
             user = User.query.filter_by(email=email).first()
             if user:
-                login_user(user)
+                session.permanent = True
+                login_user(user, remember=True, duration=timedelta(days=90))
                 user.is_online = True
                 db.session.commit()
                 session.pop('otp_email', None)
@@ -108,6 +111,7 @@ def otp():
         flash('Invalid or expired OTP code.', 'danger')
         
     return render_template('otp.html', email=email)
+
 
 @auth_bp.route('/resend-otp', methods=['POST'])
 def resend_otp():
