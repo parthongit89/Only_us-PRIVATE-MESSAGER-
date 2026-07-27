@@ -173,3 +173,21 @@ def invitation():
 
     invites = Invitation.query.order_by(Invitation.id.desc()).all()
     return render_template('invitation.html', invitations=invites)
+
+@admin_bp.route('/admin/reports')
+@login_required
+@admin_required
+def reports_list():
+    reports = Report.query.order_by(Report.id.desc()).all()
+    return render_template('admin_reports.html', reports=reports)
+
+@admin_bp.route('/admin/reports/<int:report_id>/dismiss', methods=['POST'])
+@login_required
+@admin_required
+def dismiss_report(report_id):
+    rep = Report.query.get_or_404(report_id)
+    rep.status = 'dismissed'
+    db.session.commit()
+    flash(f'Report #REP-{rep.id} has been dismissed.', 'info')
+    return redirect(url_for('admin.reports_list'))
+

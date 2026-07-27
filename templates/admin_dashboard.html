@@ -16,7 +16,9 @@
     </div>
     <div class="flex items-center gap-4">
       <a href="{{ url_for('admin.dashboard') }}" class="text-sm font-semibold text-orange-400 border-b-2 border-orange-500 pb-1">Requests Portal</a>
+      <a href="{{ url_for('admin.reports_list') }}" class="text-sm font-semibold text-gray-300 hover:text-orange-400 transition">User Reports</a>
       <a href="{{ url_for('admin.current_users') }}" class="text-sm font-semibold text-gray-300 hover:text-orange-400 transition">Current Users</a>
+
       <a href="{{ url_for('admin.users_list') }}" class="text-sm font-semibold text-gray-300 hover:text-orange-400 transition">Users Directory</a>
       <a href="{{ url_for('admin.permit') }}" class="text-sm font-semibold text-gray-300 hover:text-orange-400 transition">Permissions</a>
       <a href="{{ url_for('admin.invitation') }}" class="text-sm font-semibold text-gray-300 hover:text-orange-400 transition">Send Invites</a>
