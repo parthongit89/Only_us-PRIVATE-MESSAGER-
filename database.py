@@ -65,24 +65,51 @@ def verify_and_select_database(app):
         app.config['SQLALCHEMY_DATABASE_URI'] = app.config.get('SQLITE_FALLBACK_URL')
 
 def auto_migrate_schema():
-    """Ensures newly added columns like message_hash exist in existing database tables."""
+    """Ensures newly added columns and data types exist in database tables across PostgreSQL and SQLite."""
     try:
         from sqlalchemy import text
+        engine_name = db.engine.name.lower()
         with db.engine.connect() as conn:
-            try:
-                conn.execute(text("ALTER TABLE notifications ADD COLUMN message_hash VARCHAR(256);"))
-                conn.commit()
-                logger.info("Auto-migrated notifications table: added message_hash column.")
-            except Exception:
-                pass
+            if 'postgresql' in engine_name:
+                statements = [
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS id VARCHAR(32);",
+                    "ALTER TABLE users ALTER COLUMN id TYPE VARCHAR(32) USING id::text;",
+                    "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS user_id VARCHAR(32);",
+                    "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message_hash VARCHAR(256);",
+                    "ALTER TABLE invitations ALTER COLUMN created_by_id TYPE VARCHAR(32) USING created_by_id::text;",
+                    "ALTER TABLE conversation_members ALTER COLUMN user_id TYPE VARCHAR(32) USING user_id::text;",
+                    "ALTER TABLE messages ALTER COLUMN sender_id TYPE VARCHAR(32) USING sender_id::text;",
+                    "ALTER TABLE blocked_users ALTER COLUMN blocker_id TYPE VARCHAR(32) USING blocker_id::text;",
+                    "ALTER TABLE blocked_users ALTER COLUMN blocked_id TYPE VARCHAR(32) USING blocked_id::text;",
+                    "ALTER TABLE reports ALTER COLUMN reporter_id TYPE VARCHAR(32) USING reporter_id::text;",
+                    "ALTER TABLE reports ALTER COLUMN reported_user_id TYPE VARCHAR(32) USING reported_user_id::text;"
+                ]
+                for stmt in statements:
+                    try:
+                        conn.execute(text(stmt))
+                        conn.commit()
+                    except Exception:
+                        pass
+
+            else:
+                # SQLite fallback column check
+                try:
+                    conn.execute(text("ALTER TABLE notifications ADD COLUMN message_hash VARCHAR(256);"))
+                    conn.commit()
+                except Exception:
+                    pass
     except Exception as e:
         logger.warning(f"Auto-migration check note: {e}")
 
 def init_db(app):
     with app.app_context():
-        db.create_all()
         auto_migrate_schema()
+        try:
+            db.create_all()
+        except Exception as e:
+            logger.warning(f"db.create_all note: {e}")
         seed_initial_data()
+
 
 
 def seed_initial_data():
