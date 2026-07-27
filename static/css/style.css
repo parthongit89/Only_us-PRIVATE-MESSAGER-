@@ -65,14 +65,17 @@ body {
   width: 100%;
   max-width: 440px;
   min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   background: #111827;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
   position: relative;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
+
 
 @media (min-width: 640px) {
   .app-container {
