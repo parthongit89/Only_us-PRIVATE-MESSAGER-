@@ -74,6 +74,17 @@ def auto_migrate_schema():
                 statements = [
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS id VARCHAR(32);",
                     "ALTER TABLE users ALTER COLUMN id TYPE VARCHAR(32) USING id::text;",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(80);",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(120);",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(256);",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS passcode VARCHAR(10);",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user';",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending';",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar VARCHAR(255) DEFAULT 'default_avatar.png';",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS bio VARCHAR(255) DEFAULT 'Hey there! I am using OnlyUs.';",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP;",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP;",
                     "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS user_id VARCHAR(32);",
                     "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message_hash VARCHAR(256);",
                     "ALTER TABLE invitations ALTER COLUMN created_by_id TYPE VARCHAR(32) USING created_by_id::text;",
@@ -89,8 +100,7 @@ def auto_migrate_schema():
                         conn.execute(text(stmt))
                         conn.commit()
                     except Exception:
-                        pass
-
+                        conn.rollback()
             else:
                 # SQLite fallback column check
                 try:
@@ -110,49 +120,52 @@ def init_db(app):
             logger.warning(f"db.create_all note: {e}")
         seed_initial_data()
 
-
-
 def seed_initial_data():
-    # Seed Owner Account if missing
-    owner = User.query.filter_by(role='owner').first()
-    if not owner:
-        owner = User(
-            id='ON0001',
-            username='Owner',
-            email='owner@onlyus.app',
-            passcode='1234',
-            role='owner',
-            status='approved',
-            bio='System Owner',
-            avatar='default_avatar.png'
-        )
-        owner.set_password('OwnerPass123!')
-        db.session.add(owner)
-        db.session.commit()
+    try:
+        # Seed Owner Account if missing
+        owner = User.query.filter_by(role='owner').first()
+        if not owner:
+            owner = User(
+                id='ON0001',
+                username='Owner',
+                email='owner@onlyus.app',
+                passcode='1234',
+                role='owner',
+                status='approved',
+                bio='System Owner',
+                avatar='default_avatar.png'
+            )
+            owner.set_password('OwnerPass123!')
+            db.session.add(owner)
+            db.session.commit()
 
-    # Seed Admin Account
-    admin = User.query.filter_by(email='sonavaneparth388@gmail.com').first() or User.query.filter_by(role='admin').first()
-    if not admin:
-        admin = User(
-            id='ON0002',
-            username='Sonavaneparth388',
-            email='sonavaneparth388@gmail.com',
-            passcode='2325',
-            role='admin',
-            status='approved',
-            bio='System Administrator',
-            avatar='default_avatar.png'
-        )
-        admin.set_password('admin223')
-        db.session.add(admin)
-        db.session.commit()
-    else:
-        admin.username = 'Sonavaneparth388'
-        admin.email = 'sonavaneparth388@gmail.com'
-        admin.passcode = '2325'
-        admin.role = 'admin'
-        admin.status = 'approved'
-        admin.set_password('admin223')
-        db.session.commit()
+        # Seed Admin Account
+        admin = User.query.filter_by(email='sonavaneparth388@gmail.com').first() or User.query.filter_by(role='admin').first()
+        if not admin:
+            admin = User(
+                id='ON0002',
+                username='Sonavaneparth388',
+                email='sonavaneparth388@gmail.com',
+                passcode='2325',
+                role='admin',
+                status='approved',
+                bio='System Administrator',
+                avatar='default_avatar.png'
+            )
+            admin.set_password('admin223')
+            db.session.add(admin)
+            db.session.commit()
+        else:
+            admin.username = 'Sonavaneparth388'
+            admin.email = 'sonavaneparth388@gmail.com'
+            admin.passcode = '2325'
+            admin.role = 'admin'
+            admin.status = 'approved'
+            admin.set_password('admin223')
+            db.session.commit()
+    except Exception as e:
+        logger.warning(f"Seed initial data note: {e}")
+        db.session.rollback()
+
 
 
