@@ -88,18 +88,20 @@ def generate_next_custom_user_id() -> str:
 # Strict Media Extension & Mime-Type Sanitization
 ALLOWED_EXTENSIONS = {
     'png', 'jpg', 'jpeg', 'gif', 'webp',
-    'webm', 'wav', 'mp3', 'ogg', 'm4a',
+    'webm', 'wav', 'mp3', 'ogg', 'm4a', 'aac', '3gp', 'caf', 'amr',
     'mp4', 'mov', 'pdf', 'txt', 'doc', 'docx'
 }
 
 ALLOWED_MIME_TYPES = {
     'image/png', 'image/jpeg', 'image/gif', 'image/webp',
     'audio/webm', 'audio/wav', 'audio/mpeg', 'audio/ogg', 'audio/m4a', 'audio/mp4',
+    'audio/aac', 'audio/3gpp', 'audio/3gpp2', 'audio/x-m4a', 'audio/caf', 'audio/amr',
     'video/webm', 'video/mp4', 'video/quicktime',
     'application/pdf', 'text/plain',
     'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/octet-stream'
 }
+
 
 def validate_upload_file(file_obj) -> tuple[bool, str]:
     """Validates uploaded file against allowed extensions and MIME types."""
