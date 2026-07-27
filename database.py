@@ -74,6 +74,8 @@ def auto_migrate_schema():
                 statements = [
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS id VARCHAR(32);",
                     "ALTER TABLE users ALTER COLUMN id TYPE VARCHAR(32) USING id::text;",
+                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS employee_id VARCHAR(50);",
+                    "ALTER TABLE users ALTER COLUMN employee_id DROP NOT NULL;",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(80);",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(120);",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(256);",
@@ -85,6 +87,7 @@ def auto_migrate_schema():
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP;",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP;",
+
                     "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS user_id VARCHAR(32);",
                     "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message_hash VARCHAR(256);",
                     "ALTER TABLE invitations ALTER COLUMN created_by_id TYPE VARCHAR(32) USING created_by_id::text;",

@@ -67,17 +67,22 @@ def hash_text(text: str) -> str:
 def generate_next_custom_user_id() -> str:
     """Generates next custom user ID in format ON0001, ON0002, ON0003..."""
     from models import User
-    users = User.query.all()
+    try:
+        users = User.query.all()
+    except Exception:
+        users = []
     max_num = 0
     for u in users:
-        if u.id and str(u.id).startswith('ON'):
+        val = getattr(u, 'id', None)
+        if val and str(val).startswith('ON'):
             try:
-                num = int(str(u.id)[2:])
+                num = int(str(val)[2:])
                 if num > max_num:
                     max_num = num
             except ValueError:
                 pass
     return f"ON{max_num + 1:04d}"
+
 
 
 # Strict Media Extension & Mime-Type Sanitization
