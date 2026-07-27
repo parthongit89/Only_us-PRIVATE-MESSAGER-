@@ -172,10 +172,12 @@ class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False, index=True)
     title = db.Column(db.String(100), nullable=False)
+    message = db.Column(db.Text, nullable=True, default='') # Legacy compatibility column
     message_hash = db.Column(db.String(256), nullable=True) # Nullable for migration compatibility
     type = db.Column(db.String(30), default='system')  # system, request, invite, chat
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=get_ist_now)
+
 
     @property
     def display_hash(self):

@@ -90,6 +90,8 @@ def auto_migrate_schema():
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP;",
 
                     "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS user_id VARCHAR(32);",
+                    "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message TEXT DEFAULT '';",
+                    "ALTER TABLE notifications ALTER COLUMN message DROP NOT NULL;",
                     "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message_hash VARCHAR(256);",
                     "ALTER TABLE invitations ALTER COLUMN created_by_id TYPE VARCHAR(32) USING created_by_id::text;",
                     "ALTER TABLE conversation_members ALTER COLUMN user_id TYPE VARCHAR(32) USING user_id::text;",
@@ -106,19 +108,20 @@ def auto_migrate_schema():
                     except Exception:
                         conn.rollback()
 
-                # Remove NOT NULL constraint or drop any legacy columns in PostgreSQL users table
-                legacy_columns = ['phone', 'employee_id', 'first_name', 'last_name', 'created_by', 'address', 'city', 'state', 'zip', 'department']
+                # Remove NOT NULL constraints or drop legacy columns in PostgreSQL users and notifications tables
+                legacy_columns = ['message', 'phone', 'employee_id', 'first_name', 'last_name', 'created_by', 'address', 'city', 'state', 'zip', 'department']
                 for col in legacy_columns:
+                    try:
+                        conn.execute(text(f"ALTER TABLE notifications ALTER COLUMN {col} DROP NOT NULL;"))
+                        conn.commit()
+                    except Exception:
+                        conn.rollback()
                     try:
                         conn.execute(text(f"ALTER TABLE users ALTER COLUMN {col} DROP NOT NULL;"))
                         conn.commit()
                     except Exception:
                         conn.rollback()
-                    try:
-                        conn.execute(text(f"ALTER TABLE users DROP COLUMN IF EXISTS {col} CASCADE;"))
-                        conn.commit()
-                    except Exception:
-                        conn.rollback()
+
 
             else:
                 # SQLite fallback column check
