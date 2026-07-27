@@ -140,9 +140,9 @@ def init_db(app):
         seed_initial_data()
 
 def seed_initial_data():
+    # Seed Owner Account
     try:
-        # Seed Owner Account if missing
-        owner = User.query.filter_by(role='owner').first()
+        owner = User.query.filter_by(role='owner').first() or User.query.filter_by(id='ON0001').first()
         if not owner:
             owner = User(
                 id='ON0001',
@@ -157,9 +157,13 @@ def seed_initial_data():
             owner.set_password('OwnerPass123!')
             db.session.add(owner)
             db.session.commit()
+    except Exception as e:
+        logger.warning(f"Seed owner note: {e}")
+        db.session.rollback()
 
-        # Seed Admin Account
-        admin = User.query.filter_by(email='sonavaneparth388@gmail.com').first() or User.query.filter_by(role='admin').first()
+    # Seed Admin Account
+    try:
+        admin = User.query.filter_by(email='sonavaneparth388@gmail.com').first() or User.query.filter_by(role='admin').first() or User.query.filter_by(id='ON0002').first()
         if not admin:
             admin = User(
                 id='ON0002',
@@ -176,15 +180,15 @@ def seed_initial_data():
             db.session.commit()
         else:
             admin.username = 'Sonavaneparth388'
-            admin.email = 'sonavaneparth388@gmail.com'
             admin.passcode = '2325'
             admin.role = 'admin'
             admin.status = 'approved'
             admin.set_password('admin223')
             db.session.commit()
     except Exception as e:
-        logger.warning(f"Seed initial data note: {e}")
+        logger.warning(f"Seed admin note: {e}")
         db.session.rollback()
+
 
 
 
