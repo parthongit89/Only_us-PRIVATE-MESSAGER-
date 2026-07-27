@@ -13,10 +13,30 @@ function initSocketChat(conversationId, currentUserId, currentUsername) {
         socket.emit('join_conversation', { conversation_id: conversationId });
     });
 
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+
     socket.on('new_message', (msg) => {
         appendMessageToContainer(msg, currentUserId);
         scrollToBottom();
+
+        // Trigger phone push banner notification if allowed & message is from another user
+        if (msg.sender_id !== currentUserId && 'Notification' in window && Notification.permission === 'granted') {
+            try {
+                const notifTitle = 'OnlyUs - New Message';
+                const notifBody = msg.message_type === 'text' ? 'New private message received' : `New ${msg.message_type} attachment received`;
+                new Notification(notifTitle, {
+                    body: notifBody,
+                    icon: '/static/images/OnlyUs.png',
+                    badge: '/static/icons/icon-192.png'
+                });
+            } catch (err) {
+                console.log('Push notification trigger note:', err);
+            }
+        }
     });
+
 
     socket.on('typing_status', (data) => {
         const indicator = document.getElementById('typingIndicator');

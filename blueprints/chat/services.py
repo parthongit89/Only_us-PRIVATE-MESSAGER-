@@ -111,13 +111,36 @@ def save_media_file(file):
         raise ValueError(err_msg)
 
     os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
-    raw_name = file.filename or 'voice_note.webm'
-    if raw_name in ['blob', '', None]:
-        raw_name = 'voice_note.webm'
+    content_type = (file.content_type or '').lower()
+    
+    raw_name = file.filename or ''
+    if not raw_name or raw_name.lower() in ['blob', 'file', 'attachment']:
+        if content_type.startswith('image/'):
+            sub_ext = content_type.split('/')[-1] if '/' in content_type else 'jpg'
+            if sub_ext == 'jpeg': sub_ext = 'jpg'
+            raw_name = f"image_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{sub_ext}"
+        elif content_type.startswith('audio/'):
+            sub_ext = 'webm'
+            if 'mp4' in content_type or 'm4a' in content_type: sub_ext = 'm4a'
+            elif 'mpeg' in content_type or 'mp3' in content_type: sub_ext = 'mp3'
+            elif 'wav' in content_type: sub_ext = 'wav'
+            raw_name = f"voice_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{sub_ext}"
+        elif content_type.startswith('video/'):
+            raw_name = f"video_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
+        else:
+            raw_name = f"file_{datetime.now().strftime('%Y%m%d_%H%M%S')}.bin"
+
     filename = secure_filename(raw_name)
-    if not filename:
-        filename = 'voice_note.webm'
+    if not filename or '.' not in filename:
+        if content_type.startswith('image/'):
+            filename = (filename or 'image') + '.jpg'
+        elif content_type.startswith('audio/'):
+            filename = (filename or 'voice') + '.webm'
+        elif content_type.startswith('video/'):
+            filename = (filename or 'video') + '.mp4'
+
     unique_filename = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{filename}"
     filepath = os.path.join(Config.UPLOAD_FOLDER, unique_filename)
     file.save(filepath)
     return f"uploads/{unique_filename}"
+

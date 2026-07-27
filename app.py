@@ -27,6 +27,12 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp)
     app.register_blueprint(user_bp)
 
+    @app.route('/static/uploads/<path:filename>')
+    def serve_uploaded_file(filename):
+        from flask import send_from_directory
+        return send_from_directory(Config.UPLOAD_FOLDER, filename)
+
+
     # Initialize and seed database
     try:
         init_db(app)
