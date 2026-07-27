@@ -128,8 +128,8 @@ class ConversationMember(db.Model):
     __tablename__ = 'conversation_members'
 
     id = db.Column(db.Integer, primary_key=True)
-    conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=False)
-    user_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False)
+    conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=False, index=True)
+    user_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False, index=True)
     role = db.Column(db.String(20), default='member')  # member, admin
     joined_at = db.Column(db.DateTime, default=get_ist_now)
 
@@ -139,8 +139,8 @@ class Message(db.Model):
     __tablename__ = 'messages'
 
     id = db.Column(db.Integer, primary_key=True)
-    conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=False)
-    sender_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False)
+    conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=False, index=True)
+    sender_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False, index=True)
     content = db.Column(db.Text, nullable=True)
     message_type = db.Column(db.String(20), default='text')  # text, image, file, audio
     file_path = db.Column(db.String(255), nullable=True)
@@ -170,7 +170,7 @@ class Notification(db.Model):
     __tablename__ = 'notifications'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False)
+    user_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False, index=True)
     title = db.Column(db.String(100), nullable=False)
     message_hash = db.Column(db.String(256), nullable=True) # Nullable for migration compatibility
     type = db.Column(db.String(30), default='system')  # system, request, invite, chat
@@ -198,9 +198,10 @@ class BlockedUser(db.Model):
     __tablename__ = 'blocked_users'
 
     id = db.Column(db.Integer, primary_key=True)
-    blocker_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False)
-    blocked_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False)
+    blocker_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False, index=True)
+    blocked_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False, index=True)
     created_at = db.Column(db.DateTime, default=get_ist_now)
+
 
     blocker = db.relationship('User', foreign_keys=[blocker_id])
     blocked = db.relationship('User', foreign_keys=[blocked_id])

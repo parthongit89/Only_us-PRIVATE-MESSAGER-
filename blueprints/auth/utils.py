@@ -140,6 +140,19 @@ def send_email(to_email, subject, body, html_body=None):
         print(f"[LOCAL EMAIL LOG] To: {to_email} | Subject: '{subject}'\nBody:\n{body}\n---")
         return True
 
+import threading
+
+def send_email_async(to_email, subject, body, html_body=None):
+    """Dispatches email in a background thread so the web request returns instantly to the user."""
+    try:
+        thread = threading.Thread(target=send_email, args=(to_email, subject, body), kwargs={'html_body': html_body})
+        thread.daemon = True
+        thread.start()
+        return True
+    except Exception as e:
+        print(f"[ASYNC EMAIL THREAD ERROR] {e}")
+        return send_email(to_email, subject, body, html_body=html_body)
+
 def send_otp_email(to_email, otp_code):
     subject = "Your OnlyUs Verification Code"
     body = f"Your OnlyUs verification code is: {otp_code}. It will expire in 10 minutes."
@@ -151,7 +164,7 @@ def send_otp_email(to_email, otp_code):
         '456985': str(otp_code),
         'Hi,<br>': f'Hi {to_email},<br>'
     })
-    return send_email(to_email, subject, body, html_body=html_body)
+    return send_email_async(to_email, subject, body, html_body=html_body)
 
 def send_request_received_email(to_email):
     subject = "OnlyUs Account Access Request Received"
@@ -166,7 +179,7 @@ def send_request_received_email(to_email):
         "Report ID: </span><span style=\"background-color:#e1c3ff;white-space:pre-wrap\">None": "REG-PENDING",
         "Date: </span><span style=\"background-color:#e1c3ff;white-space:pre-wrap\">None": datetime.now().strftime('%Y-%m-%d')
     })
-    return send_email(to_email, subject, body, html_body=html_body)
+    return send_email_async(to_email, subject, body, html_body=html_body)
 
 def send_approval_email(to_email):
     subject = "OnlyUs Account Approved!"
@@ -175,7 +188,7 @@ def send_approval_email(to_email):
     html_body = load_and_render_template1('invitation Template', {
         'Hello User,': f'Hello {to_email},'
     })
-    return send_email(to_email, subject, body, html_body=html_body)
+    return send_email_async(to_email, subject, body, html_body=html_body)
 
 def send_rejection_email(to_email):
     subject = "OnlyUs Account Request Update"
@@ -184,7 +197,7 @@ def send_rejection_email(to_email):
     html_body = load_and_render_template1('Rejections Email Template', {
         'Hello User,': f'Hello {to_email},'
     })
-    return send_email(to_email, subject, body, html_body=html_body)
+    return send_email_async(to_email, subject, body, html_body=html_body)
 
 def send_friend_invite_email(friend_email, sender_email, passcode):
     subject = f"You've been invited to OnlyUs by {sender_email}"
@@ -197,7 +210,7 @@ def send_friend_invite_email(friend_email, sender_email, passcode):
         '5978': str(passcode),
         '{{EXPIRY_DATE_TIME}}': expiry_str
     })
-    return send_email(friend_email, subject, body, html_body=html_body)
+    return send_email_async(friend_email, subject, body, html_body=html_body)
 
 def send_report_email(to_email, reported_item="Account Activity", reason="Community guidelines review", report_id="REP-1001"):
     subject = "OnlyUs Account Report Notification"
@@ -210,5 +223,6 @@ def send_report_email(to_email, reported_item="Account Activity", reason="Commun
         'Report ID: </span><span style="background-color:#e1c3ff;white-space:pre-wrap">None': f'Report ID: </span><span style="background-color:#e1c3ff;white-space:pre-wrap">{report_id}',
         'Date: </span><span style="background-color:#e1c3ff;white-space:pre-wrap">None': f'Date: </span><span style="background-color:#e1c3ff;white-space:pre-wrap">{datetime.now().strftime("%Y-%m-%d")}'
     })
-    return send_email(to_email, subject, body, html_body=html_body)
+    return send_email_async(to_email, subject, body, html_body=html_body)
+
 
