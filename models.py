@@ -172,20 +172,27 @@ class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String(32), db.ForeignKey('users.id'), nullable=False)
     title = db.Column(db.String(100), nullable=False)
-    message_hash = db.Column(db.String(256), nullable=False)
+    message_hash = db.Column(db.String(256), nullable=True) # Nullable for migration compatibility
     type = db.Column(db.String(30), default='system')  # system, request, invite, chat
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=get_ist_now)
+
+    @property
+    def display_hash(self):
+        if self.message_hash:
+            return str(self.message_hash)[:24]
+        return "e3b0c44298fc1c149afbf4c8"
 
     def to_dict(self):
         return {
             'id': self.id,
             'title': self.title,
-            'message_hash': self.message_hash,
+            'message_hash': self.display_hash,
             'type': self.type,
             'is_read': self.is_read,
             'created_at': self.created_at.strftime('%d %b, %I:%M %p') if self.created_at else ''
         }
+
 
 class BlockedUser(db.Model):
     __tablename__ = 'blocked_users'

@@ -38,11 +38,20 @@ def settings():
 @user_bp.route('/notifications')
 @login_required
 def notifications():
-    notifs = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.id.desc()).all()
-    for n in notifs:
-        n.is_read = True
-    db.session.commit()
+    try:
+        notifs = Notification.query.filter_by(user_id=str(current_user.id)).order_by(Notification.id.desc()).all()
+        for n in notifs:
+            n.is_read = True
+        db.session.commit()
+    except Exception as e:
+        print(f"[NOTIFICATIONS ROUTE WARNING] {e}")
+        db.session.rollback()
+        try:
+            notifs = Notification.query.filter_by(user_id=str(current_user.id)).all()
+        except Exception:
+            notifs = []
     return render_template('notifications.html', notifications=notifs)
+
 
 @user_bp.route('/notifications/clear', methods=['POST'])
 @login_required

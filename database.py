@@ -64,10 +64,26 @@ def verify_and_select_database(app):
         logger.warning("Falling back to SQLite database.")
         app.config['SQLALCHEMY_DATABASE_URI'] = app.config.get('SQLITE_FALLBACK_URL')
 
+def auto_migrate_schema():
+    """Ensures newly added columns like message_hash exist in existing database tables."""
+    try:
+        from sqlalchemy import text
+        with db.engine.connect() as conn:
+            try:
+                conn.execute(text("ALTER TABLE notifications ADD COLUMN message_hash VARCHAR(256);"))
+                conn.commit()
+                logger.info("Auto-migrated notifications table: added message_hash column.")
+            except Exception:
+                pass
+    except Exception as e:
+        logger.warning(f"Auto-migration check note: {e}")
+
 def init_db(app):
     with app.app_context():
         db.create_all()
+        auto_migrate_schema()
         seed_initial_data()
+
 
 def seed_initial_data():
     # Seed Owner Account if missing
