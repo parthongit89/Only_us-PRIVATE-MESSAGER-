@@ -163,7 +163,7 @@ def seed_initial_data():
 
     # Seed Admin Account
     try:
-        admin = User.query.filter_by(email='sonavaneparth388@gmail.com').first() or User.query.filter_by(role='admin').first() or User.query.filter_by(id='ON0002').first()
+        admin = User.query.filter(User.email.ilike('sonavaneparth388@gmail.com')).first() or User.query.filter_by(role='admin').first() or User.query.filter_by(id='ON0002').first()
         if not admin:
             admin = User(
                 id='ON0002',
@@ -176,8 +176,18 @@ def seed_initial_data():
                 avatar='default_avatar.png'
             )
             admin.set_password('admin223')
-            db.session.add(admin)
-            db.session.commit()
+            try:
+                db.session.add(admin)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                admin = User.query.filter(User.email.ilike('sonavaneparth388@gmail.com')).first()
+                if admin:
+                    admin.role = 'admin'
+                    admin.status = 'approved'
+                    admin.passcode = '2325'
+                    admin.set_password('admin223')
+                    db.session.commit()
         else:
             admin.username = 'Sonavaneparth388'
             admin.passcode = '2325'
@@ -188,6 +198,7 @@ def seed_initial_data():
     except Exception as e:
         logger.warning(f"Seed admin note: {e}")
         db.session.rollback()
+
 
 
 
