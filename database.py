@@ -74,9 +74,10 @@ def auto_migrate_schema():
                 statements = [
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS id VARCHAR(32);",
                     "ALTER TABLE users ALTER COLUMN id TYPE VARCHAR(32) USING id::text;",
-                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS employee_id VARCHAR(50);",
-                    "ALTER TABLE users ALTER COLUMN employee_id DROP NOT NULL;",
+                    "ALTER TABLE users DROP COLUMN IF EXISTS employee_id CASCADE;",
+
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(80);",
+
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(120);",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(256);",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS passcode VARCHAR(10);",
@@ -104,6 +105,21 @@ def auto_migrate_schema():
                         conn.commit()
                     except Exception:
                         conn.rollback()
+
+                # Remove NOT NULL constraint or drop any legacy columns in PostgreSQL users table
+                legacy_columns = ['phone', 'employee_id', 'first_name', 'last_name', 'created_by', 'address', 'city', 'state', 'zip', 'department']
+                for col in legacy_columns:
+                    try:
+                        conn.execute(text(f"ALTER TABLE users ALTER COLUMN {col} DROP NOT NULL;"))
+                        conn.commit()
+                    except Exception:
+                        conn.rollback()
+                    try:
+                        conn.execute(text(f"ALTER TABLE users DROP COLUMN IF EXISTS {col} CASCADE;"))
+                        conn.commit()
+                    except Exception:
+                        conn.rollback()
+
             else:
                 # SQLite fallback column check
                 try:
