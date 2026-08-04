@@ -34,19 +34,25 @@ def create_access_request(email, password=None, passcode=None, from_email=None, 
             req.password_hash = password_hash
         req.passcode = passcode
 
-    # Send notification to admins with hashed message summary
-    admins = User.query.filter(User.role.in_(['admin', 'owner'])).all()
-    msg_summary = f"Account request from {email}."
-    for admin in admins:
-        notif = Notification(
-            user_id=admin.id,
-            title='New Account Request',
-            message_hash=hash_text(msg_summary),
-            type='request'
-        )
-        db.session.add(notif)
-
     db.session.commit()
+
+    # Send notification to admins with hashed message summary
+    try:
+        admins = User.query.filter(User.role.in_(['admin', 'owner'])).all()
+        msg_summary = f"Account request from {email}."
+        for admin in admins:
+            notif = Notification(
+                user_id=str(admin.id),
+                title='New Account Request',
+                message_hash=hash_text(msg_summary),
+                type='request'
+            )
+            db.session.add(notif)
+        db.session.commit()
+    except Exception as notif_err:
+        print(f"[ACCOUNT REQUEST NOTIF WARNING] {notif_err}")
+        db.session.rollback()
+
 
     # Send Email Notification to requesting user or friend
     if from_email and for_email and from_email != for_email:

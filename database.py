@@ -90,6 +90,7 @@ def auto_migrate_schema():
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP;",
 
                     "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS user_id VARCHAR(32);",
+                    "ALTER TABLE notifications ALTER COLUMN user_id TYPE VARCHAR(32) USING user_id::text;",
                     "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message TEXT DEFAULT '';",
                     "ALTER TABLE notifications ALTER COLUMN message DROP NOT NULL;",
                     "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message_hash VARCHAR(256);",
@@ -101,6 +102,7 @@ def auto_migrate_schema():
                     "ALTER TABLE reports ALTER COLUMN reporter_id TYPE VARCHAR(32) USING reporter_id::text;",
                     "ALTER TABLE reports ALTER COLUMN reported_user_id TYPE VARCHAR(32) USING reported_user_id::text;"
                 ]
+
                 for stmt in statements:
                     try:
                         conn.execute(text(stmt))
