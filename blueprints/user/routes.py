@@ -110,18 +110,30 @@ def report_user():
 def invite():
     from blueprints.admin.services import generate_invitation
     if request.method == 'POST':
-        friend_email = request.form.get('email')
-        if friend_email:
-            try:
-                inv = generate_invitation(current_user.id, friend_email)
-                notif = Notification(user_id=current_user.id, title="Friend Invitation Sent", message_hash=hash_text(f"Invitation sent to {friend_email}."), type="activity")
-                db.session.add(notif)
-                db.session.commit()
-                flash(f'Invitation sent successfully to {friend_email}!', 'success')
-            except Exception as e:
-                flash(f'Could not send invitation: {e}', 'danger')
+        friend_email = request.form.get('email', '').strip().lower()
+        if not friend_email:
+            flash('Please enter a valid Gmail address.', 'danger')
             return redirect(url_for('user.invite'))
-        flash('Please enter a valid Gmail address.', 'danger')
+
+        if friend_email == current_user.email.lower():
+            flash('You cannot send an invitation to your own email address.', 'warning')
+            return redirect(url_for('user.invite'))
+
+        existing_user = User.query.filter(User.email.ilike(friend_email)).first()
+        if existing_user and existing_user.status == 'approved':
+            flash(f'{friend_email} is already an active user on OnlyUs!', 'info')
+            return redirect(url_for('user.invite'))
+
+        try:
+            inv = generate_invitation(current_user.id, friend_email)
+            notif = Notification(user_id=current_user.id, title="Friend Invitation Sent", message_hash=hash_text(f"Invitation sent to {friend_email}."), type="activity")
+            db.session.add(notif)
+            db.session.commit()
+            flash(f'Invitation sent successfully to {friend_email}! (Passcode: {inv.passcode})', 'success')
+        except Exception as e:
+            flash(f'Could not send invitation: {e}', 'danger')
+        return redirect(url_for('user.invite'))
 
     return render_template('user_invite.html')
+
 

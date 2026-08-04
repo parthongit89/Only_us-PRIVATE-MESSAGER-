@@ -113,35 +113,59 @@ def reject_all_requests():
     return count
 
 def generate_invitation(creator_id, recipient_email, passcode=None):
+    recipient_email = (recipient_email or '').strip().lower()
+    creator_id = str(creator_id)
     code = str(uuid.uuid4())
     passcode = passcode or generate_4digit_passcode()
-    inv = Invitation(
-        code=code,
-        passcode=passcode,
-        created_by_id=creator_id,
-        recipient_email=recipient_email,
-        status='pending'
-    )
-    db.session.add(inv)
+
+    # Check if an invitation already exists for this email
+    inv = Invitation.query.filter(Invitation.recipient_email.ilike(recipient_email)).first()
+    if not inv:
+        inv = Invitation(
+            code=code,
+            passcode=passcode,
+            created_by_id=creator_id,
+            recipient_email=recipient_email,
+            status='pending'
+        )
+        db.session.add(inv)
+    else:
+        inv.code = code
+        inv.passcode = passcode
+        inv.created_by_id = creator_id
+        inv.status = 'pending'
     
-    # Also create pending AccountRequest
+    # Also create or update pending AccountRequest
     creator = User.query.get(creator_id)
     sender_email = creator.email if creator else 'OnlyUs Admin'
     
-    req = AccountRequest(
-        email=recipient_email,
-        from_email=sender_email,
-        for_email=recipient_email,
-        passcode=passcode,
-        status='pending',
-        note=f'Friend invitation from {sender_email}'
-    )
-    db.session.add(req)
+    req = AccountRequest.query.filter(AccountRequest.email.ilike(recipient_email)).first()
+    if not req:
+        req = AccountRequest(
+            email=recipient_email,
+            from_email=sender_email,
+            for_email=recipient_email,
+            passcode=passcode,
+            status='pending',
+            note=f'Friend invitation from {sender_email}'
+        )
+        db.session.add(req)
+    else:
+        req.from_email = sender_email
+        req.for_email = recipient_email
+        req.passcode = passcode
+        req.status = 'pending'
+
     db.session.commit()
 
-    # Send email notification to friend
-    send_friend_invite_email(recipient_email, sender_email, passcode)
+    # Send email notification to friend safely
+    try:
+        send_friend_invite_email(recipient_email, sender_email, passcode)
+    except Exception as e:
+        print(f"[INVITE EMAIL WARNING] Could not send invite email: {e}")
+
     return inv
+
 
 def update_user_role(user_id, new_role):
     user = User.query.get(user_id)
