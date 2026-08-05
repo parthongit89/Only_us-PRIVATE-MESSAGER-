@@ -167,8 +167,14 @@ def generate_invitation(creator_id, recipient_email, passcode=None):
     return inv
 
 
+def _get_user_by_id(user_id):
+    if not user_id:
+        return None
+    uid = str(user_id).strip()
+    return User.query.get(uid) or User.query.filter(User.id == uid).first()
+
 def update_user_role(user_id, new_role):
-    user = User.query.get(user_id)
+    user = _get_user_by_id(user_id)
     if not user:
         return False, "User not found."
     user.role = new_role
@@ -176,7 +182,7 @@ def update_user_role(user_id, new_role):
     return True, f"Updated {user.username}'s role to {new_role}."
 
 def toggle_user_status(user_id):
-    user = User.query.get(user_id)
+    user = _get_user_by_id(user_id)
     if not user:
         return False, "User not found."
     user.status = 'rejected' if user.status == 'approved' else 'approved'
@@ -184,7 +190,7 @@ def toggle_user_status(user_id):
     return True, f"User {user.username} status set to {user.status}."
 
 def suspend_user_account(user_id):
-    user = User.query.get(user_id)
+    user = _get_user_by_id(user_id)
     if not user:
         return False, "User not found."
     user.status = 'suspended'
@@ -192,7 +198,7 @@ def suspend_user_account(user_id):
     return True, f"Suspended account for {user.username}."
 
 def deny_service_user(user_id):
-    user = User.query.get(user_id)
+    user = _get_user_by_id(user_id)
     if not user:
         return False, "User not found."
     user.status = 'denied'
@@ -200,13 +206,13 @@ def deny_service_user(user_id):
     return True, f"Denied service access for {user.username}."
 
 def notify_user_account(user_id, title, message):
-    user = User.query.get(user_id)
+    user = _get_user_by_id(user_id)
     if not user:
         return False, "User not found."
     from blueprints.auth.security import hash_text
     msg_content = message or "Notification from Administrator."
     notif = Notification(
-        user_id=user.id,
+        user_id=str(user.id),
         title=title or "Admin Notice",
         message_hash=hash_text(msg_content),
         type="system"
@@ -217,12 +223,12 @@ def notify_user_account(user_id, title, message):
 
 
 def report_user_account(admin_id, user_id, reason="Admin Report"):
-    user = User.query.get(user_id)
+    user = _get_user_by_id(user_id)
     if not user:
         return False, "User not found."
     rep = Report(
-        reporter_id=admin_id,
-        reported_user_id=user.id,
+        reporter_id=str(admin_id),
+        reported_user_id=str(user.id),
         reason=reason,
         status='pending'
     )
@@ -234,18 +240,18 @@ def report_user_account(admin_id, user_id, reason="Admin Report"):
     return True, f"Report logged against {user.username}."
 
 def message_user_as_admin(admin_id, user_id, message_text):
-    user = User.query.get(user_id)
+    user = _get_user_by_id(user_id)
     if not user:
         return False, "User not found."
     from blueprints.chat.services import get_or_create_direct_conversation, save_message
-    conv = get_or_create_direct_conversation(admin_id, user.id)
+    conv = get_or_create_direct_conversation(str(admin_id), str(user.id))
     if conv:
-        save_message(conv.id, admin_id, message_text or "Hello from Administrator!")
+        save_message(conv.id, str(admin_id), message_text or "Hello from Administrator!")
         return True, f"Admin message dispatched to {user.username}."
     return False, "Could not open chat conversation."
 
 def deny_user_invitation(user_id):
-    user = User.query.get(user_id)
+    user = _get_user_by_id(user_id)
     if not user:
         return False, "User not found."
     # Revoke or reject invitations generated for this user
@@ -254,4 +260,5 @@ def deny_user_invitation(user_id):
         inv.status = 'expired'
     db.session.commit()
     return True, f"Denied invitation permissions for {user.username}."
+
 

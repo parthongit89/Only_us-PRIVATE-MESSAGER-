@@ -85,7 +85,7 @@ def current_users():
     all_users = User.query.order_by(User.id.asc()).all()
     return render_template('Currentusers.html', users=all_users)
 
-@admin_bp.route('/admin/users/<int:user_id>/toggle-status', methods=['POST'])
+@admin_bp.route('/admin/users/<user_id>/toggle-status', methods=['POST'])
 @login_required
 @admin_required
 def user_toggle_status(user_id):
@@ -93,7 +93,7 @@ def user_toggle_status(user_id):
     flash(msg, 'success' if success else 'danger')
     return redirect(url_for('admin.current_users'))
 
-@admin_bp.route('/admin/users/<int:user_id>/report', methods=['POST'])
+@admin_bp.route('/admin/users/<user_id>/report', methods=['POST'])
 @login_required
 @admin_required
 def user_report(user_id):
@@ -102,7 +102,7 @@ def user_report(user_id):
     flash(msg, 'warning' if success else 'danger')
     return redirect(url_for('admin.current_users'))
 
-@admin_bp.route('/admin/users/<int:user_id>/notify', methods=['POST'])
+@admin_bp.route('/admin/users/<user_id>/notify', methods=['POST'])
 @login_required
 @admin_required
 def user_notify(user_id):
@@ -112,7 +112,7 @@ def user_notify(user_id):
     flash(msg, 'info' if success else 'danger')
     return redirect(url_for('admin.current_users'))
 
-@admin_bp.route('/admin/users/<int:user_id>/suspend', methods=['POST'])
+@admin_bp.route('/admin/users/<user_id>/suspend', methods=['POST'])
 @login_required
 @admin_required
 def user_suspend(user_id):
@@ -120,7 +120,7 @@ def user_suspend(user_id):
     flash(msg, 'warning' if success else 'danger')
     return redirect(url_for('admin.current_users'))
 
-@admin_bp.route('/admin/users/<int:user_id>/deny-service', methods=['POST'])
+@admin_bp.route('/admin/users/<user_id>/deny-service', methods=['POST'])
 @login_required
 @admin_required
 def user_deny_service(user_id):
@@ -128,7 +128,7 @@ def user_deny_service(user_id):
     flash(msg, 'danger' if success else 'warning')
     return redirect(url_for('admin.current_users'))
 
-@admin_bp.route('/admin/users/<int:user_id>/message', methods=['POST'])
+@admin_bp.route('/admin/users/<user_id>/message', methods=['POST'])
 @login_required
 @admin_required
 def user_message(user_id):
@@ -137,13 +137,14 @@ def user_message(user_id):
     flash(msg, 'success' if success else 'danger')
     return redirect(url_for('admin.current_users'))
 
-@admin_bp.route('/admin/users/<int:user_id>/deny-invitation', methods=['POST'])
+@admin_bp.route('/admin/users/<user_id>/deny-invitation', methods=['POST'])
 @login_required
 @admin_required
 def user_deny_invitation(user_id):
     success, msg = deny_user_invitation(user_id)
     flash(msg, 'info' if success else 'danger')
     return redirect(url_for('admin.current_users'))
+
 
 @admin_bp.route('/admin/permit', methods=['GET', 'POST'])
 @login_required

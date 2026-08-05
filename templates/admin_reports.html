@@ -68,14 +68,15 @@
           <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex items-center gap-4 shadow-inner self-stretch md:self-auto justify-around">
             
             <!-- Suspend Reported User -->
-            {% if rep.reported_user %}
-              <form action="{{ url_for('admin.user_suspend', user_id=rep.reported_user.id) }}" method="POST">
+            {% if rep.reported_user_id %}
+              <form action="{{ url_for('admin.user_suspend', user_id=rep.reported_user_id) }}" method="POST">
                 <button type="submit" class="flex flex-col items-center text-red-400 hover:text-red-300 transition" title="Suspend User Account">
                   <i data-lucide="shield-alert" class="w-5 h-5"></i>
                   <span class="text-xs font-semibold mt-1">Suspend User</span>
                 </button>
               </form>
             {% endif %}
+
 
             <!-- Dismiss Report -->
             <form action="{{ url_for('admin.dismiss_report', report_id=rep.id) }}" method="POST">
