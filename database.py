@@ -71,38 +71,57 @@ def auto_migrate_schema():
         engine_name = db.engine.name.lower()
         with db.engine.connect() as conn:
             if 'postgresql' in engine_name:
+                fk_cleanup_sql = """
+                DO $$
+                BEGIN
+                    ALTER TABLE IF EXISTS invitations DROP CONSTRAINT IF EXISTS invitations_created_by_id_fkey;
+                    ALTER TABLE IF EXISTS conversation_members DROP CONSTRAINT IF EXISTS conversation_members_user_id_fkey;
+                    ALTER TABLE IF EXISTS messages DROP CONSTRAINT IF EXISTS messages_sender_id_fkey;
+                    ALTER TABLE IF EXISTS blocked_users DROP CONSTRAINT IF EXISTS blocked_users_blocker_id_fkey;
+                    ALTER TABLE IF EXISTS blocked_users DROP CONSTRAINT IF EXISTS blocked_users_blocked_id_fkey;
+                    ALTER TABLE IF EXISTS reports DROP CONSTRAINT IF EXISTS reports_reporter_id_fkey;
+                    ALTER TABLE IF EXISTS reports DROP CONSTRAINT IF EXISTS reports_reported_user_id_fkey;
+                    ALTER TABLE IF EXISTS notifications DROP CONSTRAINT IF EXISTS notifications_user_id_fkey;
+
+                    ALTER TABLE users ALTER COLUMN id TYPE VARCHAR(32) USING id::text;
+                    ALTER TABLE invitations ALTER COLUMN created_by_id TYPE VARCHAR(32) USING created_by_id::text;
+                    ALTER TABLE conversation_members ALTER COLUMN user_id TYPE VARCHAR(32) USING user_id::text;
+                    ALTER TABLE messages ALTER COLUMN sender_id TYPE VARCHAR(32) USING sender_id::text;
+                    ALTER TABLE blocked_users ALTER COLUMN blocker_id TYPE VARCHAR(32) USING blocker_id::text;
+                    ALTER TABLE blocked_users ALTER COLUMN blocked_id TYPE VARCHAR(32) USING blocked_id::text;
+                    ALTER TABLE reports ALTER COLUMN reporter_id TYPE VARCHAR(32) USING reporter_id::text;
+                    ALTER TABLE reports ALTER COLUMN reported_user_id TYPE VARCHAR(32) USING reported_user_id::text;
+                    ALTER TABLE notifications ALTER COLUMN user_id TYPE VARCHAR(32) USING user_id::text;
+                EXCEPTION
+                    WHEN OTHERS THEN
+                        NULL;
+                END $$;
+                """
+                try:
+                    conn.execute(text(fk_cleanup_sql))
+                    conn.commit()
+                except Exception as ex:
+                    print(f"[POSTGRES FK MIGRATION WARNING] {ex}")
+                    conn.rollback()
+
                 statements = [
-                    "ALTER TABLE users ADD COLUMN IF NOT EXISTS id VARCHAR(32);",
-                    "ALTER TABLE users ALTER COLUMN id TYPE VARCHAR(32) USING id::text;",
                     "ALTER TABLE users DROP COLUMN IF EXISTS employee_id CASCADE;",
-
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS username VARCHAR(80);",
-
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(120);",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(256);",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS passcode VARCHAR(10);",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user';",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending';",
-                    "ALTER TABLE users ALTER COLUMN id TYPE VARCHAR(32) USING id::text;",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar VARCHAR(255) DEFAULT 'default_avatar.png';",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS bio VARCHAR(255) DEFAULT 'Hey there! I am using OnlyUs.';",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP;",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP;",
 
-
                     "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS user_id VARCHAR(32);",
-                    "ALTER TABLE notifications ALTER COLUMN user_id TYPE VARCHAR(32) USING user_id::text;",
                     "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message TEXT DEFAULT '';",
                     "ALTER TABLE notifications ALTER COLUMN message DROP NOT NULL;",
-                    "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message_hash VARCHAR(256);",
-                    "ALTER TABLE invitations ALTER COLUMN created_by_id TYPE VARCHAR(32) USING created_by_id::text;",
-                    "ALTER TABLE conversation_members ALTER COLUMN user_id TYPE VARCHAR(32) USING user_id::text;",
-                    "ALTER TABLE messages ALTER COLUMN sender_id TYPE VARCHAR(32) USING sender_id::text;",
-                    "ALTER TABLE blocked_users ALTER COLUMN blocker_id TYPE VARCHAR(32) USING blocker_id::text;",
-                    "ALTER TABLE blocked_users ALTER COLUMN blocked_id TYPE VARCHAR(32) USING blocked_id::text;",
-                    "ALTER TABLE reports ALTER COLUMN reporter_id TYPE VARCHAR(32) USING reporter_id::text;",
-                    "ALTER TABLE reports ALTER COLUMN reported_user_id TYPE VARCHAR(32) USING reported_user_id::text;"
+                    "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS message_hash VARCHAR(256);"
                 ]
 
                 for stmt in statements:
@@ -111,6 +130,7 @@ def auto_migrate_schema():
                         conn.commit()
                     except Exception:
                         conn.rollback()
+
 
                 # Remove NOT NULL constraints or drop legacy columns in PostgreSQL users and notifications tables
                 legacy_columns = ['message', 'phone', 'employee_id', 'first_name', 'last_name', 'created_by', 'address', 'city', 'state', 'zip', 'department']
