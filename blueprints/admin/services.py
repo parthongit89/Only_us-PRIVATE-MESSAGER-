@@ -17,6 +17,7 @@ def approve_request(request_id):
         from blueprints.auth.security import generate_next_custom_user_id, hash_text
         username = req.email.split('@')[0].capitalize()
         new_id = generate_next_custom_user_id()
+        
         user = User(
             id=new_id,
             username=username,
@@ -29,49 +30,66 @@ def approve_request(request_id):
             user.password_hash = req.password_hash
         else:
             user.set_password('OnlyUs123!')
-        db.session.add(user)
+        
+        try:
+            db.session.add(user)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            # Retry with next generated ID if collision occurred
+            new_id = generate_next_custom_user_id()
+            user.id = new_id
+            db.session.add(user)
+            db.session.commit()
     else:
         user.status = 'approved'
         if req.password_hash:
             user.password_hash = req.password_hash
         if req.passcode:
             user.passcode = req.passcode
-
-    db.session.commit()
+        db.session.commit()
 
     # Automatically initiate direct conversation column between Inviter and Invited user
-    if req.from_email and req.from_email != req.email:
-        inviter = User.query.filter_by(email=req.from_email).first()
-        if inviter and inviter.id != user.id:
-            from blueprints.auth.security import hash_text
-            from blueprints.chat.services import get_or_create_direct_conversation, save_message
-            conv = get_or_create_direct_conversation(inviter.id, user.id)
-            if conv:
-                if conv.messages.count() == 0:
-                    save_message(conv.id, inviter.id, f"Hey {user.username}! Welcome to OnlyUs.")
-                    save_message(conv.id, user.id, "Thanks for the invitation! Happy to connect here.")
-                
-                n1 = Notification(
-                    user_id=inviter.id,
-                    title="Invitation Accepted",
-                    message_hash=hash_text(f"{user.username} accepted invitation."),
-                    type="system"
-                )
-                n2 = Notification(
-                    user_id=user.id,
-                    title="Connected with Friend",
-                    message_hash=hash_text(f"Connected with {inviter.username}."),
-                    type="system"
-                )
-                db.session.add_all([n1, n2])
-                db.session.commit()
+    try:
+        if req.from_email and req.from_email != req.email:
+            inviter = User.query.filter_by(email=req.from_email).first()
+            if inviter and str(inviter.id) != str(user.id):
+                from blueprints.auth.security import hash_text
+                from blueprints.chat.services import get_or_create_direct_conversation, save_message
+                conv = get_or_create_direct_conversation(str(inviter.id), str(user.id))
+                if conv:
+                    if conv.messages.count() == 0:
+                        save_message(conv.id, str(inviter.id), f"Hey {user.username}! Welcome to OnlyUs.")
+                        save_message(conv.id, str(user.id), "Thanks for the invitation! Happy to connect here.")
+                    
+                    n1 = Notification(
+                        user_id=str(inviter.id),
+                        title="Invitation Accepted",
+                        message_hash=hash_text(f"{user.username} accepted invitation."),
+                        type="system"
+                    )
+                    n2 = Notification(
+                        user_id=str(user.id),
+                        title="Connected with Friend",
+                        message_hash=hash_text(f"Connected with {inviter.username}."),
+                        type="system"
+                    )
+                    db.session.add_all([n1, n2])
+                    db.session.commit()
+    except Exception as conv_err:
+        print(f"[APPROVE CHAT INIT WARNING] {conv_err}")
+        db.session.rollback()
 
     # Send Approval Email Notification
-    send_approval_email(req.email)
-    if req.for_email and req.for_email != req.email:
-        send_approval_email(req.for_email)
+    try:
+        send_approval_email(req.email)
+        if req.for_email and req.for_email != req.email:
+            send_approval_email(req.for_email)
+    except Exception as mail_err:
+        print(f"[APPROVE EMAIL WARNING] {mail_err}")
 
     return True, f"Approved request for {req.email}."
+
 
 
 def reject_request(request_id):

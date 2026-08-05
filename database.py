@@ -83,11 +83,13 @@ def auto_migrate_schema():
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS passcode VARCHAR(10);",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user';",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending';",
+                    "ALTER TABLE users ALTER COLUMN id TYPE VARCHAR(32) USING id::text;",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar VARCHAR(255) DEFAULT 'default_avatar.png';",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS bio VARCHAR(255) DEFAULT 'Hey there! I am using OnlyUs.';",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT FALSE;",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP;",
                     "ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP;",
+
 
                     "ALTER TABLE notifications ADD COLUMN IF NOT EXISTS user_id VARCHAR(32);",
                     "ALTER TABLE notifications ALTER COLUMN user_id TYPE VARCHAR(32) USING user_id::text;",

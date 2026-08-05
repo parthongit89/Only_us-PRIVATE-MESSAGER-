@@ -71,17 +71,28 @@ def generate_next_custom_user_id() -> str:
         users = User.query.all()
     except Exception:
         users = []
-    max_num = 0
+    max_num = 2  # ON0001 is Owner, ON0002 is Admin
+    existing_ids = set()
     for u in users:
         val = getattr(u, 'id', None)
-        if val and str(val).startswith('ON'):
-            try:
-                num = int(str(val)[2:])
-                if num > max_num:
-                    max_num = num
-            except ValueError:
-                pass
-    return f"ON{max_num + 1:04d}"
+        if val:
+            val_str = str(val).strip()
+            existing_ids.add(val_str)
+            if val_str.startswith('ON'):
+                try:
+                    num = int(val_str[2:])
+                    if num > max_num:
+                        max_num = num
+                except ValueError:
+                    pass
+
+    next_num = max_num + 1
+    candidate = f"ON{next_num:04d}"
+    while candidate in existing_ids:
+        next_num += 1
+        candidate = f"ON{next_num:04d}"
+    return candidate
+
 
 
 
