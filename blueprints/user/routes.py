@@ -121,8 +121,10 @@ def invite():
 
         existing_user = User.query.filter(User.email.ilike(friend_email)).first()
         if existing_user and existing_user.status == 'approved':
-            flash(f'{friend_email} is already an active user on OnlyUs!', 'info')
-            return redirect(url_for('user.invite'))
+            from blueprints.chat.services import get_or_create_direct_conversation
+            conv = get_or_create_direct_conversation(current_user.id, existing_user.id)
+            flash(f'{existing_user.username} ({friend_email}) is already active on OnlyUs! Opening chat now...', 'success')
+            return redirect(url_for('chat.conversation_view', conversation_id=conv.id))
 
         try:
             inv = generate_invitation(current_user.id, friend_email)
@@ -134,6 +136,8 @@ def invite():
             flash(f'Could not send invitation: {e}', 'danger')
         return redirect(url_for('user.invite'))
 
-    return render_template('user_invite.html')
+    active_users = User.query.filter(User.id != current_user.id, User.status == 'approved').all()
+    return render_template('user_invite.html', active_users=active_users)
+
 
 

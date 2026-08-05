@@ -46,9 +46,33 @@
         <i data-lucide="send" class="w-4 h-4"></i> Send Passcode
       </button>
     </form>
-  </div>
+
+    {% if active_users %}
+      <div class="mt-8 pt-6 border-t border-gray-800">
+        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+          <i data-lucide="users" class="w-4 h-4 text-orange-500"></i> Active Members (Chat Directly)
+        </h3>
+        <div class="space-y-3">
+          {% for u in active_users %}
+            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+              <div class="flex items-center gap-3">
+                <img src="{{ url_for('static', filename='avatars/' + u.avatar) }}" class="w-10 h-10 rounded-full border border-orange-500/30 object-cover" />
+                <div>
+                  <h4 class="text-sm font-semibold text-white">{{ u.username }}</h4>
+                  <p class="text-xs text-gray-400">{{ u.email }}</p>
+                </div>
+              </div>
+              <a href="{{ url_for('chat.start_chat', target_user_id=u.id) }}" class="bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 text-xs font-semibold px-4 py-2 rounded-xl transition flex items-center gap-1.5">
+                <i data-lucide="message-square" class="w-3.5 h-3.5"></i> Chat Now
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
 
   </div>
 
 </div>
 {% endblock %}
+
