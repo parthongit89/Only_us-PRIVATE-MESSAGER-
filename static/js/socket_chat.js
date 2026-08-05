@@ -219,24 +219,24 @@ function appendMessageToContainer(msg, currentUserId) {
 
     let contentHtml = '';
     if (msg.message_type === 'image' && msg.file_path) {
-        contentHtml = `<img src="/static/${msg.file_path}" class="chat-lightbox-img max-w-xs rounded-xl shadow-md mb-1 object-cover cursor-pointer hover:opacity-95 active:scale-95 transition" />`;
+        contentHtml = `<img src="/static/${msg.file_path}" class="chat-lightbox-img max-w-full max-h-[300px] rounded-xl shadow-md mb-1 object-cover cursor-pointer hover:opacity-95 active:scale-95 transition" />`;
     } else if (msg.message_type === 'audio' && msg.file_path) {
         contentHtml = `
             <div class="flex flex-col gap-1">
                 <span class="text-[11px] font-semibold opacity-80 flex items-center gap-1"><i data-lucide="mic" class="w-3.5 h-3.5"></i> Voice Note</span>
-                <audio controls src="/static/${msg.file_path}" class="w-64 max-w-full my-1 rounded-lg"></audio>
+                <audio controls src="/static/${msg.file_path}" class="w-full min-w-[200px] max-w-[260px] my-1 rounded-lg"></audio>
             </div>
         `;
     } else if (msg.message_type === 'video' && msg.file_path) {
-        contentHtml = `<video controls src="/static/${msg.file_path}" class="max-w-xs rounded-xl shadow-md my-1"></video>`;
+        contentHtml = `<video controls src="/static/${msg.file_path}" class="max-w-full max-h-[300px] rounded-xl shadow-md my-1"></video>`;
     } else if (msg.message_type === 'file' && msg.file_path) {
         contentHtml = `<a href="/static/${msg.file_path}" target="_blank" class="flex items-center gap-2 underline ${isSelf ? 'text-orange-100' : 'text-orange-400'} font-medium"><i data-lucide="file-text" class="w-4 h-4"></i> Download Attachment</a>`;
     } else {
-        contentHtml = `<p class="text-sm font-medium">${escapeHtml(msg.content)}</p>`;
+        contentHtml = `<p class="text-sm font-medium leading-relaxed break-words">${escapeHtml(msg.content)}</p>`;
     }
 
     wrapper.innerHTML = `
-        <div class="max-w-[80%] ${isSelf ? 'bg-orange-600 text-white rounded-t-2xl rounded-l-2xl shadow-lg shadow-orange-600/20' : 'bg-gray-800 border border-gray-700 text-gray-100 rounded-t-2xl rounded-r-2xl'} p-3 shadow-sm">
+        <div class="max-w-[88%] sm:max-w-[80%] ${isSelf ? 'bg-orange-600 text-white rounded-t-2xl rounded-l-2xl shadow-lg shadow-orange-600/20' : 'bg-gray-800 border border-gray-700 text-gray-100 rounded-t-2xl rounded-r-2xl'} p-3 shadow-sm">
             ${contentHtml}
             <span class="block text-[10px] ${isSelf ? 'text-orange-200' : 'text-gray-400'} text-right mt-1">${msg.created_at}</span>
         </div>
@@ -246,6 +246,7 @@ function appendMessageToContainer(msg, currentUserId) {
     if (window.lucide) {
         lucide.createIcons();
     }
+
 }
 
 function setupImageLightbox() {
