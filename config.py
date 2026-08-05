@@ -11,6 +11,10 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(days=90)
     REMEMBER_COOKIE_DURATION = timedelta(days=90)
     REMEMBER_COOKIE_REFRESH_EACH_REQUEST = True
+    SESSION_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+
 
     
     raw_pg_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:parthpostgress89%23%23@localhost:5432/onlyus')

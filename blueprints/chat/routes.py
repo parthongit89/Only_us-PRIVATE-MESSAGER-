@@ -39,12 +39,16 @@ def conversation_view(conversation_id):
     messages = conv.messages.order_by(Message.id.asc()).all()
     return render_template('chat.html', conversation=conv, recipient=recipient, messages=messages)
 
-@chat_bp.route('/chat/start/<int:target_user_id>')
+@chat_bp.route('/chat/start/<target_user_id>')
 @login_required
 def start_chat(target_user_id):
-    target = User.query.get_or_404(target_user_id)
+    target = User.query.get(str(target_user_id)) or User.query.filter_by(id=str(target_user_id)).first_or_404()
+    if str(target.id) == str(current_user.id):
+        flash('You cannot start a direct chat with yourself.', 'warning')
+        return redirect(url_for('chat.home'))
     conv = get_or_create_direct_conversation(current_user.id, target.id)
     return redirect(url_for('chat.conversation_view', conversation_id=conv.id))
+
 
 @chat_bp.route('/chat/upload', methods=['POST'])
 @login_required
