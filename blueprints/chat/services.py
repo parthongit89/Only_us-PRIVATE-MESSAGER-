@@ -8,16 +8,19 @@ from config import Config
 from blueprints.auth.security import encrypt_message_content, decrypt_message_content, validate_upload_file, hash_text
 
 def get_or_create_direct_conversation(user1_id, user2_id):
+    u1_str = str(user1_id).strip()
+    u2_str = str(user2_id).strip()
+    
     # Find existing direct conversation between user1 and user2
     user1_convs = db.session.query(ConversationMember.conversation_id)\
-        .filter(ConversationMember.user_id == user1_id).all()
+        .filter(ConversationMember.user_id == u1_str).all()
     user1_conv_ids = [c[0] for c in user1_convs]
 
     existing = db.session.query(Conversation)\
         .join(ConversationMember)\
         .filter(Conversation.is_group == False)\
         .filter(Conversation.id.in_(user1_conv_ids))\
-        .filter(ConversationMember.user_id == user2_id).first()
+        .filter(ConversationMember.user_id == u2_str).first()
 
     if existing:
         return existing
@@ -27,15 +30,16 @@ def get_or_create_direct_conversation(user1_id, user2_id):
     db.session.add(conv)
     db.session.commit()
 
-    cm1 = ConversationMember(conversation_id=conv.id, user_id=user1_id)
-    cm2 = ConversationMember(conversation_id=conv.id, user_id=user2_id)
+    cm1 = ConversationMember(conversation_id=conv.id, user_id=u1_str)
+    cm2 = ConversationMember(conversation_id=conv.id, user_id=u2_str)
     db.session.add_all([cm1, cm2])
     db.session.commit()
 
     return conv
 
 def get_user_conversations(user_id):
-    memberships = ConversationMember.query.filter_by(user_id=user_id).all()
+    uid_str = str(user_id).strip()
+    memberships = ConversationMember.query.filter_by(user_id=uid_str).all()
     conv_list = []
     
     for m in memberships:
@@ -43,7 +47,7 @@ def get_user_conversations(user_id):
         if not conv.is_group:
             other_member = ConversationMember.query.filter(
                 ConversationMember.conversation_id == conv.id,
-                ConversationMember.user_id != user_id
+                ConversationMember.user_id != uid_str
             ).first()
             other_user = other_member.user if other_member else None
             name = other_user.username if other_user else "Chat"
@@ -69,10 +73,11 @@ def get_user_conversations(user_id):
     return conv_list
 
 def save_message(conversation_id, sender_id, content, message_type='text', file_path=None):
+    sender_id_str = str(sender_id).strip()
     encrypted_content = encrypt_message_content(content) if content else ""
     msg = Message(
         conversation_id=conversation_id,
-        sender_id=sender_id,
+        sender_id=sender_id_str,
         content=encrypted_content,
         message_type=message_type,
         file_path=file_path,
@@ -80,27 +85,31 @@ def save_message(conversation_id, sender_id, content, message_type='text', file_
     )
     db.session.add(msg)
 
-    # Create in-app Notification for recipients
-    sender = User.query.get(sender_id)
-    sender_name = sender.username if sender else "Someone"
-    preview = content if message_type == 'text' else f"[{message_type.capitalize()}]"
+    # Create in-app Notification for recipients safely
+    try:
+        sender = User.query.filter(User.id == sender_id_str).first()
+        sender_name = sender.username if sender else "Someone"
+        preview = content if message_type == 'text' else f"[{message_type.capitalize()}]"
 
-    other_members = ConversationMember.query.filter(
-        ConversationMember.conversation_id == conversation_id,
-        ConversationMember.user_id != sender_id
-    ).all()
+        other_members = ConversationMember.query.filter(
+            ConversationMember.conversation_id == conversation_id,
+            ConversationMember.user_id != sender_id_str
+        ).all()
 
-    for m in other_members:
-        notif = Notification(
-            user_id=m.user_id,
-            title=f"New message from {sender_name}",
-            message_hash=hash_text(preview),
-            type="message"
-        )
-        db.session.add(notif)
+        for m in other_members:
+            notif = Notification(
+                user_id=str(m.user_id),
+                title=f"New message from {sender_name}",
+                message_hash=hash_text(preview),
+                type="message"
+            )
+            db.session.add(notif)
+    except Exception as notif_err:
+        print(f"[SAVE MESSAGE NOTIF WARNING] {notif_err}")
 
     db.session.commit()
     return msg
+
 
 
 def save_media_file(file):
