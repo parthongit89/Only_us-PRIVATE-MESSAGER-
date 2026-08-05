@@ -49,21 +49,21 @@ def approve_request(request_id):
             user.passcode = req.passcode
         db.session.commit()
 
-    # Automatically initiate direct conversation column between Inviter and Invited user
+    # Automatically initiate direct conversations between newly approved user and all existing active users
     try:
-        if req.from_email and req.from_email != req.email:
-            inviter = User.query.filter_by(email=req.from_email).first()
-            if inviter and str(inviter.id) != str(user.id):
-                from blueprints.auth.security import hash_text
-                from blueprints.chat.services import get_or_create_direct_conversation, save_message
-                conv = get_or_create_direct_conversation(str(inviter.id), str(user.id))
-                if conv:
-                    if conv.messages.count() == 0:
-                        save_message(conv.id, str(inviter.id), f"Hey {user.username}! Welcome to OnlyUs.")
-                        save_message(conv.id, str(user.id), "Thanks for the invitation! Happy to connect here.")
-                    
+        active_users = User.query.filter(User.id != user.id, User.status == 'approved').all()
+        from blueprints.auth.security import hash_text
+        from blueprints.chat.services import get_or_create_direct_conversation, save_message
+        
+        for active_u in active_users:
+            conv = get_or_create_direct_conversation(str(active_u.id), str(user.id))
+            if conv and conv.messages.count() == 0:
+                is_inviter = req.from_email and active_u.email.lower() == req.from_email.lower()
+                if is_inviter:
+                    save_message(conv.id, str(active_u.id), f"Hey {user.username}! Welcome to OnlyUs.")
+                    save_message(conv.id, str(user.id), "Thanks for the invitation! Happy to connect here.")
                     n1 = Notification(
-                        user_id=str(inviter.id),
+                        user_id=str(active_u.id),
                         title="Invitation Accepted",
                         message_hash=hash_text(f"{user.username} accepted invitation."),
                         type="system"
@@ -71,14 +71,17 @@ def approve_request(request_id):
                     n2 = Notification(
                         user_id=str(user.id),
                         title="Connected with Friend",
-                        message_hash=hash_text(f"Connected with {inviter.username}."),
+                        message_hash=hash_text(f"Connected with {active_u.username}."),
                         type="system"
                     )
                     db.session.add_all([n1, n2])
-                    db.session.commit()
+                else:
+                    save_message(conv.id, str(active_u.id), f"Hello {user.username}! Welcome to OnlyUs.")
+        db.session.commit()
     except Exception as conv_err:
         print(f"[APPROVE CHAT INIT WARNING] {conv_err}")
         db.session.rollback()
+
 
     # Send Approval Email Notification
     try:
