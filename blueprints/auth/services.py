@@ -10,6 +10,11 @@ from .utils import (
 )
 
 def create_access_request(email, password=None, passcode=None, from_email=None, for_email=None):
+    # Enforce 50 user capacity limit for server performance & load stability
+    approved_count = User.query.filter_by(status='approved').count()
+    if approved_count >= 50:
+        raise ValueError("Maximum user capacity limit (50 users) has been reached to maintain server performance. Please try again later or contact Administrator.")
+
     # Hash password if provided
     password_hash = generate_password_hash(password) if password else None
     
@@ -18,6 +23,7 @@ def create_access_request(email, password=None, passcode=None, from_email=None, 
         passcode = generate_4digit_passcode()
 
     req = AccountRequest.query.filter_by(email=email, status='pending').first()
+
     if not req:
         req = AccountRequest(
             email=email,

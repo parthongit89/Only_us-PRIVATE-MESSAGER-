@@ -9,7 +9,12 @@ def approve_request(request_id):
     if not req or req.status != 'pending':
         return False, "Request not found or already processed."
 
+    approved_count = User.query.filter_by(status='approved').count()
+    if approved_count >= 50:
+        return False, "Cannot approve request: Maximum user capacity limit (50 users) has been reached to maintain server performance."
+
     req.status = 'approved'
+
     
     # Create or update approved User
     user = User.query.filter_by(email=req.email).first()

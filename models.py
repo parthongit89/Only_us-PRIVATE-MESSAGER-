@@ -10,7 +10,11 @@ def get_ist_now():
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(str(user_id))
+    if not user_id:
+        return None
+    uid = str(user_id).strip()
+    return User.query.filter(User.id == uid).first()
+
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
